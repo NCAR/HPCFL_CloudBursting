@@ -3,3 +3,7 @@
 terraform
 terraform.tfstate
 terraform.tfstate.backup
+.terraform.tfstate.lock.info
+/addEC2
+/rmEC2
+wg
