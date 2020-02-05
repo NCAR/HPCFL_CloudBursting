@@ -37,19 +37,19 @@ func (i EC2Instance) PublicIP() string {
 
 func (i EC2Instance) Setup() {
 	//TODO: remove old key from ~/.ssh/known_hosts if exists
-	if strings.HasPrefix(i.NameStr, "router"){
+	if strings.HasPrefix(i.Name(), "router"){
 		log.Printf("aws: Setting up a router instance\n")
-		err := exec.Command(AWS_DIR+"wgInstall.sh", i.NameStr, i.PublicIPStr).Run()
+		err := exec.Command(AWS_DIR+"wgInstall.sh", i.Name(), i.PublicIP()).Run()
 		if err != nil {
-			log.Printf("ERROR:aws: error setting up instance %s\n", err)
+			log.Printf("ERROR:aws: error setting up instance %s %s\n", i.Name(), err)
 		}
-	}else if strings.HasPrefix(i.NameStr, "aws"){
+	}else if strings.HasPrefix(i.Name(), "aws"){
 		log.Printf("aws: Setting up a compute instance\n")
 		//TODO do some error handling
 		// must be able to deal with the exit status of script is 255 b/c of reboot command
-		err := exec.Command(AWS_DIR+"nodeSetup.sh", i.NameStr, AWS_DIR).Run()
+		err := exec.Command(AWS_DIR+"nodeSetup.sh", i.Name(), AWS_DIR).Run()
 		if err != nil {
-			log.Printf("ERROR:aws: error setting up instance %s\n", err)
+			log.Printf("ERROR:aws: error setting up instance %s %s\n", i.Name(), err)
 		}
 	}else{
 		log.Printf("ERROR:aws: Unknown node type %s\n", i.NameStr)	

@@ -22,7 +22,6 @@ func main() {
 	log.Printf("INFO: %s called with args %s\n", os.Args[0], os.Args[1:len(os.Args)])
 	os.Setenv("PWD", "/home/slurm/terraform")
 	newInsts := slurm.NodeNames(os.Args[1])
-	newInsts = newInsts[0:len(newInsts)-1]
 	
 	for _, inst := range newInsts{
 		log.Printf("INFO: Creating ec2 Instance %s\n", inst)
@@ -34,7 +33,6 @@ func main() {
 	var wg sync.WaitGroup	
 
 	for _, i := range newInsts{
-		log.Printf("%s\n", i)
 		wg.Add(1)
 		go func(name string, wg *sync.WaitGroup){
 			defer wg.Done()

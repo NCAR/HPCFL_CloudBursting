@@ -23,5 +23,6 @@ func NodeNames(glob string) []string{
 	if err != nil{
 		log.Printf("ERROR:slurm: Error expanding nodename glob %s\n", err)
 	}
-	return strings.Split(string(out), "\n")
+	names := strings.Split(string(out), "\n")
+	return names[0:len(names)-1]
 }
