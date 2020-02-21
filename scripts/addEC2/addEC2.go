@@ -18,7 +18,7 @@ func main() {
 	defer f.Close()
 	log.SetOutput(f)
 
-	//check called with an arg 
+	//check called with an arg
 	if len(os.Args) != 2 {
 		log.Fatalf("ERROR: Usage: $s <instance name glob>\n", os.Args[0])
 	}

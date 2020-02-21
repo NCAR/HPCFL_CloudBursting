@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"text/template"
+	"time"
 )
 
 //Info returns all of the information terraform knows about the given instance name
@@ -114,22 +115,31 @@ func Del(name string) {
 	}*/
 }
 
-//Update updates the running cloud infrastructure to reflect the current config files
-//Should be run after calls to Add or Del
-func Update() {
+func getCmd() *exec.Cmd {
 	cmd := exec.Command(TERRAFORM_DIR+"terraform", "apply", "-auto-approve", "-state="+TERRAFORM_DIR+"terraform.tfstate", "-lock=true", "-input=false", CONFIG_DIR)
 	cmd.Dir = TERRAFORM_DIR
 	cmd.Env = make([]string, 2)
 	cmd.Env[0] = "PWD=" + TERRAFORM_DIR
 	cmd.Env[1] = "HOME=/var/lib/slurm"
-	out, err := cmd.CombinedOutput()
-	if err != nil {
+	return cmd
+}
+
+//Update updates the running cloud infrastructure to reflect the current config files
+//Should be run after calls to Add or Del
+func Update() {
+	cmd := getCmd()
+	//TODO put a limit on the number of retries
+	for out, err := cmd.CombinedOutput(); err != nil; out, err = cmd.CombinedOutput() {
 		log.Printf("ERROR:terraform: Problem updating cloud resources %s %s\n", out, err)
+		time.Sleep(time.Second * 5)
+		log.Printf("Info:terraform: Trying command again\n")
+		cmd = getCmd()
 	}
 }
 
 //Stop stops all running cloud infrastructure and deletes config for all compute instances
 func Stop() {
+	//TODO make concurently callable (see Update() function)
 	cmd := exec.Command(TERRAFORM_DIR+"terraform", "destroy", "-auto-approve", "-state="+TERRAFORM_DIR+"terraform.tfstate", "-lock=true", "-input=false", CONFIG_DIR)
 	cmd.Dir = TERRAFORM_DIR
 	cmd.Env = make([]string, 2)
