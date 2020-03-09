@@ -18,5 +18,7 @@ fi
 scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no "$2salt-minion.service" $1:~/
 scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no "$2ifcfg-eth0" $1:~/
 scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no "$2minion" $1:~/
+scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no "$2keys/$1.pem" $1:~/minion.pem
+scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no "$2keys/$1.pub" $1:~/minion.pub
 ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no $1 "./saltInstall.sh $1"
 
