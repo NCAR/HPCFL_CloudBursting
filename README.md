@@ -40,7 +40,8 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
 - need to put aws credentials in ~slurm/.aws/credentials
 - need to put aws config in ~slurm/.aws/config
   - might actually be optional (TODO check)
-  - ex: ```
+  - ex:
+```
 [default]
 region = us-east-2
 output = json
