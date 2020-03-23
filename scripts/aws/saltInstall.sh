@@ -14,6 +14,12 @@ sudo yum update -y
 sudo yum install salt-minion --disablerepo=epel -y
 sudo mv -f /home/ec2-user/salt-minion.service /usr/lib/systemd/system/salt-minion.service
 sudo mv -f /home/ec2-user/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0
+sudo mv -f /home/ec2-user/minion.pem /etc/salt/pki/minion/minion.pem
+sudo chown root:root /etc/salt/pki/minion/minion.pem
+sudo chmod 400 /etc/salt/pki/minion/minion.pem
+sudo mv -f /home/ec2-user/minion.pub /etc/salt/pki/minion/minion.pub
+sudo chown root:root /etc/salt/pki/minion/minion.pem
+sudo chmod 644 /etc/salt/pki/minion/minion.pub
 sudo mv -f /home/ec2-user/minion /etc/salt/minion
 sudo systemctl daemon-reload
 sudo systemctl enable salt-minion
