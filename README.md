@@ -4,7 +4,7 @@ The goal of this repo is to contain all required configuration, code, and instru
 ## Other resources
 Helpful documents related to this repo and its goal can be found in the docs dir
 
-## Building scripts
+## Building Scripts
 ```bash
 cd scripts
 # can't build in place because script names are the same as existing dirs
@@ -14,10 +14,10 @@ go build ../rmEC2 rmEC2/rmEC2.go
 
 ## Setup
 
-### wireguard
-- just need it installed locally
+### Wireguard
+- Just need it installed locally
 
-### slurm
+### Slurm
 - slurm.conf need following options
 ```
 SuspendProgram=/path/to/rmInstance/Program
@@ -29,31 +29,31 @@ NodeName=<name glob> Weight=<uint> Feature=cloud State=Cloud
 PrivateData=cloud # technically optional, but required to make sinfo etc. output usefull
 ```
 
-### terraform
-- need it, can't remember if there was any weird setup
+### Terraform
+- Need it, can't remember if there was any weird setup
 - (TODO add link to website)
 
-### salt
+### Salt
 - Used for provisioning instances
 - Need to update ip of salt master in setup scripts (TODO make this easy)
 - Can find salt setup that goes with this repo here (TODO add salt repo link)
 
-### aws
+### AWS
 - ```sudo -u slurm terraform apply -auto-approve tfFiles/```
-  - sets up router instance
-  - can be found in tfFiles/infra.tf
+  - Sets up router instance
+  - Can be found in tfFiles/infra.tf
 - ```sudo wgInstall router0 <public ip from last command>```
-  - sets up router0 instance as a wireguard router
-- instances need to be in ~slurm/.ssh/config
+  - Sets up router0 instance as a wireguard router
+- Instances need to be in ~slurm/.ssh/config
 ```
 Host aws4
         HostName 192.168.2.54
         User "ec2-user"
         IdentityFile /home/of/slurm/.ssh/<key file>
 ```
-- need to put aws credentials in ~slurm/.aws/credentials
-- need to put aws config in ~slurm/.aws/config
-  - might actually be optional (TODO check)
+- Need to put aws credentials in ~slurm/.aws/credentials
+- Need to put aws config in ~slurm/.aws/config
+  - Might actually be optional (TODO check)
   - ex:
 ```
 [default]
@@ -61,8 +61,8 @@ region = us-east-2
 output = json
 ```
 
-### other clouds
-- other clouds are easily added one simply needs to:
+### Other Clouds
+- Other clouds are easily added one simply needs to:
   1. Create a package for that cloud that implements a struct that fills the utils.Instance interface
   2. Update terraform.{Info,Add} function switch statments to support new cloud
   3. Update salt to do the rest of the provisioning neccesarry for the new instance types
