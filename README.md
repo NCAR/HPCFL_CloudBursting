@@ -1,40 +1,54 @@
 # Cloud Bursting
-The goal of this repo is to contain all required configuration, code, and instructions, to dynamically spin up/down cloud instances when needed via a batch scheduler {slurm,pbs} on multiple different clouds {aws,azure}
+The goal of this repo is to contain all required configuration, code, and instructions, to dynamically spin up/down cloud instances when needed via the hooks provided by a batch scheduler (Slurm, PBS, etc) on multiple different clouds (AWS, Azure, GCP).
 
-## Usage
-1. cd scripts; go build -o ../addEC2 addEC2/addEC2.go
-2. ./scripts/shellScripts/wgInstall.sh <router0 public ip> <ssh key path> router0
-3. cd scripts/shellScripts && ./nodeSetup aws0
-4. sudo salt-key --accept=aws0
+## Other resources
+Helpful documents related to this repo and its goal can be found in the docs dir
 
-## Requirments
-- golang
-- cloud account with {aws,azure}
-- terraform cli
-- {slurm,pbs}
-
-## Notes
-- scripts must be run from terraform dir
-  - working on fixing this (because of terraform only likely fix is 'cd terraform\_dir; ./terraform')
+## Building scripts
+```bash
+cd scripts
+# can't build in place because
+go build ../addEC2 addEC2/addEC2.go
+go build ../rmEC2 rmEC2/rmEC2.go
+```
 
 ## Setup
-- need to get aws credentials if using aws (See aws website)
-  - easiest to use aws cli
-- need an ssh key pair
-  - create and update the infra.tf file in tfFiles
 
-## Current Status
-- able to bring up all aws infra up needed to run ec2 instances
-- Automate generation of a VPN between local network and aws VPC
+### slurm
+- slurm.conf need following options
+```
+SuspendProgram=/path/to/rmInstance/Program
+ResumeProgram=/path/to/addInstance/Program
+SuspendTime=<seconds to leave an instance idle before shutting it down>
+ResumeTimeout=<seconds an instance can take to start up>
+TreeWidth=<int greater than number of cloud nodes, max value is 65533>
+NodeName=<name glob> Weight=<uint> Feature=cloud State=Cloud
+PrivateData=cloud # technically optional, but required to make sinfo etc. output usefull
+```
 
-## In Progress
-- Automate ec2 instance provisioning
+### salt
+- Used for provisioning instances
+- Need to update ip of salt master in setup scripts (TODO make this easy)
+- Can find salt setup that goes with this repo here (TODO add salt repo link)
 
-## TODO
-- Connect it all to Slurm
-- Make VPC connection to cloud redundant
-- Find efficient way to move data between local network and aws
-- Test scallability
-- Use azure
-- Use pbs
+### aws
+- ```sudo -u slurm terraform apply -auto-approve tfFiles/```
+  - sets up router instance
+  - can be found in tfFiles/infra.tf
+- ```sudo wgInstall router0 <public ip from last command>```
+  - sets up router0 instance as a wireguard router
+- need to put aws credentials in ~slurm/.aws/credentials
+- need to put aws config in ~slurm/.aws/config
+  - might actually be optional (TODO check)
+  - ex: ```
+[default]
+region = us-east-2
+output = json
+```
 
+### other clouds
+- other clouds are easily added one simply needs to:
+  1. Create a package for that cloud that implements a struct that fills the utils.Instance interface
+  2. Update terraform.{Info,Add} function switch statments to support new cloud
+  3. Update salt to do the rest of the provisioning neccesarry for the new instance types
+  4. Update slurm.conf so slurm knows about the new instances

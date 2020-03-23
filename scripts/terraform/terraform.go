@@ -115,7 +115,7 @@ func Add(inst string) utils.Instance {
 }
 
 func addec2(inst aws.EC2Instance) aws.EC2Instance {
-	t, err := template.New("ec2Instance.tmpl").ParseFiles(TERRAFORM_DIR + "ec2Instance.tmpl")
+	t, err := template.New("ec2Instance.tmpl").ParseFiles(TERRAFORM_DIR + "scripts/terraform/ec2Instance.tmpl")
 	if err != nil {
 		log.Printf("ERROR:terraform: Could not open config file template file\n")
 	}
