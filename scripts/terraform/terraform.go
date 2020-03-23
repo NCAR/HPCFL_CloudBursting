@@ -77,6 +77,7 @@ func Update() {
 	}
 }
 
+//TODO test
 func instanceNames() []string {
 	matches, err := filepath.Glob(CONFIG_DIR + "[!infra].tf")
 	if err != nil {
@@ -91,6 +92,7 @@ func instanceNames() []string {
 }
 
 //Stop stops all running cloud infrastructure and deletes config for all compute instances
+//Note: currently untested but probably works
 func Stop() {
 	for _, inst := range instanceNames() {
 		Del(inst)
