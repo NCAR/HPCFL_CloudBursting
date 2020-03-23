@@ -6,36 +6,49 @@ import (
 	"strings"
 )
 
+//EC2Instance represents an EC2 compute instance
 type EC2Instance struct {
-	NameStr      string `json:"nodeName"`
-	PrivateIPStr string `json:"privateIP"`
-	PublicIPStr  string `json:"publicIP"`
+	name      string //`json:"nodeName"`
+	privateIP string //`json:"privateIP"`
+	publicIP  string //`json:"publicIP"`
 }
 
-func New(name, ip string) EC2Instance {
-	return EC2Instance{NameStr: name, PrivateIPStr: ip}
+//New creates and returns a new EC2Instance
+//NOTE: Does not create or setup instance
+func New(name, privateIP, publicIP string) EC2Instance {
+	return EC2Instance{name: name, privateIP: privateIP, publicIP: publicIP}
 }
 
+//String returns a string describing the given ec2 instance
 func (i EC2Instance) String() string {
-	return "ec2Instance " + i.NameStr + ":" + i.PrivateIPStr + " Public:" + i.PublicIPStr
-}
-
-func (i EC2Instance) IP() string {
-	return i.PrivateIPStr
-}
-
-func (i EC2Instance) Name() string {
-	return i.NameStr
-}
-
-func (i EC2Instance) PublicIP() string {
-	if i.PublicIPStr == "" {
-		log.Printf("ERROR: Attempting to get public IP of %s, which is not know\n", i.NameStr)
+	if i.publicIP == "" {
+		return "ec2Instance " + i.name + ":" + i.privateIP
 	}
-	return i.PublicIPStr
+	return "ec2Instance " + i.name + ":" + i.privateIP + " Public:" + i.publicIP
 }
 
-func (i EC2Instance) Setup() {
+// IP returns the private ip for the instance
+func (i EC2Instance) IP() string {
+	return i.privateIP
+}
+
+//Name returns the name of the instance
+func (i EC2Instance) Name() string {
+	return i.name
+}
+
+//PublicIP returns the publicIP of the instance
+//If it has none an empty string is returned
+func (i EC2Instance) PublicIP() string {
+	if i.publicIP == "" {
+		log.Printf("ERROR: Attempting to get public IP of %s, which is not know\n", i.name)
+	}
+	return i.publicIP
+}
+
+//Setup does all the provisioning neccesary to setup the instance
+//TODO return error when it makes sense to
+func (i EC2Instance) Setup() error {
 	//TODO: remove old key from ~/.ssh/known_hosts if exists
 	if strings.HasPrefix(i.Name(), "router") {
 		log.Printf("aws: Setting up a router instance\n")
@@ -52,6 +65,7 @@ func (i EC2Instance) Setup() {
 			log.Printf("ERROR:aws: error setting up instance %s %s\n", i.Name(), err)
 		}
 	} else {
-		log.Printf("ERROR:aws: Unknown node type %s\n", i.NameStr)
+		log.Printf("ERROR:aws: Unknown node type %s\n", i.name)
 	}
+	return nil
 }
