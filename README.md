@@ -7,7 +7,7 @@ Helpful documents related to this repo and its goal can be found in the docs dir
 ## Building scripts
 ```bash
 cd scripts
-# can't build in place because
+# can't build in place because script names are the same as existing dirs
 go build ../addEC2 addEC2/addEC2.go
 go build ../rmEC2 rmEC2/rmEC2.go
 ```
@@ -37,6 +37,13 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
   - can be found in tfFiles/infra.tf
 - ```sudo wgInstall router0 <public ip from last command>```
   - sets up router0 instance as a wireguard router
+- instances need to be in ~slurm/.ssh/config
+```
+Host aws4
+        HostName 192.168.2.54
+        User "ec2-user"
+        IdentityFile /home/of/slurm/.ssh/<key file>
+```
 - need to put aws credentials in ~slurm/.aws/credentials
 - need to put aws config in ~slurm/.aws/config
   - might actually be optional (TODO check)

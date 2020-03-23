@@ -100,6 +100,7 @@ func Stop() {
 
 //Add creates a config file for the given instance, but does not create it
 //NOTE: Update must be called afterwards to update the cloud infrastructure
+//NOTE: instance name number must be less than 205
 func Add(inst string) utils.Instance {
 	switch {
 	case strings.HasPrefix(inst, "aws"):
@@ -107,6 +108,7 @@ func Add(inst string) utils.Instance {
 		if err != nil {
 			log.Printf("ERROR:terraform: could not add instance %s\n", inst)
 		}
+		//TODO add check 50+i is <255
 		return addec2(aws.New(inst, "192.168.2."+strconv.Itoa(50+i), ""))
 	default:
 		log.Printf("Error: don't know how to add instance %s\n", inst)
