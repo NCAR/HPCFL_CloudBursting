@@ -14,6 +14,9 @@ go build ../rmEC2 rmEC2/rmEC2.go
 
 ## Setup
 
+### wireguard
+- just need it installed locally
+
 ### slurm
 - slurm.conf need following options
 ```
@@ -25,6 +28,10 @@ TreeWidth=<int greater than number of cloud nodes, max value is 65533>
 NodeName=<name glob> Weight=<uint> Feature=cloud State=Cloud
 PrivateData=cloud # technically optional, but required to make sinfo etc. output usefull
 ```
+
+### terraform
+- need it, can't remember if there was any weird setup
+- (TODO add link to website)
 
 ### salt
 - Used for provisioning instances
