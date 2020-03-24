@@ -1,21 +1,12 @@
 package slurm
 
 import (
-	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 	"log"
 	"os/exec"
 	"strings"
 )
 
 const SLURM_DIR = "/opt/slurm/latest/"
-
-func Add(inst utils.Instance) {
-	log.Printf("INFO:slurm: adding %s\n", inst)
-}
-
-func Del(inst string) {
-	log.Printf("INFO:slurm: removing %s\n", inst)
-}
 
 //NodeNames takes a glob string and returns a slice of all of the names contained in the glob
 //The glob string is of the format slurm uses

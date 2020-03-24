@@ -26,7 +26,10 @@ func setup(names []string) {
 			defer wg.Done()
 			inst := terraform.Info(name)
 			log.Printf("INFO: Provisioning new instance %s\n", inst)
-			inst.Setup()
+			err := inst.Setup()
+			if err != nil {
+				log.Printf("ERROR:addEC2:%v\n", err)
+			}
 			log.Printf("INFO: Done provisioning %s\n", inst)
 		}(n, &wg)
 	}

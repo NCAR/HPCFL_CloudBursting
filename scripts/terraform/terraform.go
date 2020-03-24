@@ -12,8 +12,15 @@ import (
 	"time"
 
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/aws"
-	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
+
+//Instance represents a cloud instance
+type Instance interface {
+	Name() string
+	IP() string
+	String() string
+	Setup() error
+}
 
 //configCmd sets up the environment to run terraform commands
 func configCmd(cmd *exec.Cmd) {
@@ -24,7 +31,7 @@ func configCmd(cmd *exec.Cmd) {
 }
 
 //Info returns all of the information terraform knows about the given instance name
-func Info(name string) utils.Instance {
+func Info(name string) Instance {
 	//setup and run command
 	cmd := exec.Command(TERRAFORM_DIR+"terraform", "output", "-state="+TERRAFORM_DIR+"terraform.tfstate", "-json", "-no-color", name)
 	configCmd(cmd)
@@ -103,23 +110,24 @@ func Stop() {
 //Add creates a config file for the given instance, but does not create it
 //NOTE: Update must be called afterwards to update the cloud infrastructure
 //NOTE: instance name number must be less than 205
-func Add(inst string) utils.Instance {
+func Add(name string) Instance {
 	switch {
-	case strings.HasPrefix(inst, "aws"):
-		i, err := strconv.Atoi(inst[3:])
+	case strings.HasPrefix(name, "aws"):
+		i, err := strconv.Atoi(name[3:])
 		if err != nil {
-			log.Printf("ERROR:terraform: could not add instance %s\n", inst)
+			log.Printf("ERROR:terraform: could not add instance %s\n", name)
 		}
 		//TODO add check 50+i is <255
-		return addec2(aws.New(inst, "192.168.2."+strconv.Itoa(50+i), ""))
+		return add("ec2Instance.tmpl", aws.New(name, "192.168.2."+strconv.Itoa(50+i), ""))
 	default:
-		log.Printf("Error: don't know how to add instance %s\n", inst)
+		log.Printf("Error: don't know how to add instance %s\n", name)
 		return nil
 	}
 }
 
-func addec2(inst aws.EC2Instance) aws.EC2Instance {
-	t, err := template.New("ec2Instance.tmpl").ParseFiles(TERRAFORM_DIR + "scripts/terraform/ec2Instance.tmpl")
+//add populates the given template with the given Instance
+func add(tmpl string, inst Instance) Instance {
+	t, err := template.New(tmpl).ParseFiles(TERRAFORM_DIR + "scripts/terraform/" + tmpl)
 	if err != nil {
 		log.Printf("ERROR:terraform: Could not open config file template file\n")
 	}

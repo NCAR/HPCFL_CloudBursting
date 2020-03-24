@@ -7,15 +7,8 @@ import (
 	"os"
 )
 
-//Instance represents a cloud instance
-type Instance interface {
-	Name() string
-	IP() string
-	String() string
-	Setup() error
-}
-
 //SetupLogging sets up logging to the file /var/lib/slurm/<fn>
+//returned func pointer should be defered to do cleanup
 func SetupLogging(fn string) (func() error, error) {
 	f, err := os.OpenFile("/var/lib/slurm/"+fn, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
