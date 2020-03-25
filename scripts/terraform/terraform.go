@@ -3,10 +3,10 @@ package terraform
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -113,12 +113,12 @@ func Stop() {
 func Add(name string) Instance {
 	switch {
 	case strings.HasPrefix(name, "aws"):
-		i, err := strconv.Atoi(name[3:])
-		if err != nil {
-			log.Printf("ERROR:terraform: could not add instance %s\n", name)
+		ip := ip(name)
+		if ip == "" {
+			log.Printf("Error: Unable to add node %s\n", name)
+			return nil
 		}
-		//TODO add check 50+i is <255
-		return add("ec2Instance.tmpl", aws.New(name, "192.168.2."+strconv.Itoa(50+i), ""))
+		return add("ec2Instance.tmpl", aws.New(name, ip, ""))
 	default:
 		log.Printf("Error: don't know how to add instance %s\n", name)
 		return nil
@@ -141,4 +141,13 @@ func add(tmpl string, inst Instance) Instance {
 		log.Printf("ERROR:terraform: Could not write to config file for instance %s %s\n", inst.Name(), err)
 	}
 	return inst
+}
+
+func ip(name string) string {
+	addr, err := net.LookupHost(name)
+	if err != nil {
+		log.Printf("Error: Could not find ip for host %s\n", name)
+		return ""
+	}
+	return addr[0]
 }
