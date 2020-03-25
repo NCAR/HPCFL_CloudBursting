@@ -79,7 +79,7 @@ func Update() {
 		log.Printf("ERROR:terraform: Problem updating cloud resources %s %s\n", out, err)
 		time.Sleep(time.Second * 5)
 		log.Printf("Info:terraform: Trying command again\n")
-		cmd := exec.Command(TERRAFORM_DIR+"terraform", "apply", "-auto-approve", "-state="+TERRAFORM_DIR+"terraform.tfstate", "-lock=true", "-input=false", CONFIG_DIR)
+		cmd = exec.Command(TERRAFORM_DIR+"terraform", "apply", "-auto-approve", "-state="+TERRAFORM_DIR+"terraform.tfstate", "-lock=true", "-input=false", CONFIG_DIR)
 		configCmd(cmd)
 	}
 }
