@@ -40,6 +40,8 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
 
 ### AWS
 - Salt keys should be pregenerated for minions and put in scripts/aws/keys and preaccepted by the salt master
+  - make sure keys are readable by slurm user
+  - to accept keys copy $NAME.pub to /etc/salt/pki/master/minions/$NAME (remove .pub)
 - ```sudo -u slurm terraform apply -auto-approve tfFiles/```
   - Sets up router instance
   - Can be found in tfFiles/infra.tf
