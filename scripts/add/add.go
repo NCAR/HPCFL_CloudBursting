@@ -28,7 +28,7 @@ func setup(names []string) {
 			log.Printf("INFO: Provisioning new instance %s\n", inst)
 			err := inst.Setup()
 			if err != nil {
-				log.Printf("ERROR:addEC2:%v\n", err)
+				log.Printf("ERROR:add:%v\n", err)
 			}
 			log.Printf("INFO: Done provisioning %s\n", inst)
 		}(n, &wg)
@@ -38,7 +38,7 @@ func setup(names []string) {
 
 func main() {
 	//set up logging file
-	cleanup, err := utils.SetupLogging("addEC2")
+	cleanup, err := utils.SetupLogging("add")
 	if err != nil {
 		log.Fatalf("CRITICAL: %s\n", err)
 	}

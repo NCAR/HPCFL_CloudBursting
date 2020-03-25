@@ -5,6 +5,6 @@ terraform.tfstate
 terraform.tfstate.backup
 .terraform.tfstate.lock.info
 .tfstate*
-/addEC2
-/rmEC2
+/add
+/rm
 wg

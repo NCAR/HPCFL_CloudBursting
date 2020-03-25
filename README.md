@@ -39,18 +39,12 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
 - Can find salt setup that goes with this repo here (TODO add salt repo link)
 
 ### AWS
+- Salt keys should be pregenerated for minions and put in scripts/aws/keys and preaccepted by the salt master
 - ```sudo -u slurm terraform apply -auto-approve tfFiles/```
   - Sets up router instance
   - Can be found in tfFiles/infra.tf
 - ```sudo wgInstall router0 <public ip from last command>```
   - Sets up router0 instance as a wireguard router
-- Instances need to be in ~slurm/.ssh/config
-```
-Host aws4
-        HostName 192.168.2.54
-        User "ec2-user"
-        IdentityFile /home/of/slurm/.ssh/<key file>
-```
 - Need to put aws credentials in ~slurm/.aws/credentials
 - Need to put aws config in ~slurm/.aws/config
   - Might actually be optional (TODO check)

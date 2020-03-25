@@ -18,7 +18,7 @@ func rm(names string) {
 
 func main() {
 	//setup logging
-	cleanup, err := utils.SetupLogging("rmEC2")
+	cleanup, err := utils.SetupLogging("rm")
 	if err != nil {
 		log.Fatalf("Critical: %s\n", err)
 	}
