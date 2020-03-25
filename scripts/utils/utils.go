@@ -10,9 +10,9 @@ import (
 //SetupLogging sets up logging to the file /var/lib/slurm/<fn>
 //returned func pointer should be defered to do cleanup
 func SetupLogging(fn string) (func() error, error) {
-	f, err := os.OpenFile("/var/lib/slurm/"+fn, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("/var/log/slurm/"+fn+".log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("Could not open log file /var/lib/slurm/%s, %s", fn, err)
+		return nil, fmt.Errorf("Could not open log file /var/log/slurm/%s.log, %s", fn, err)
 	}
 	log.SetOutput(f)
 
