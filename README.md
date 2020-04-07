@@ -37,11 +37,12 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
 - Used for provisioning instances
 - Need to update ip of salt master in setup scripts (TODO make this easy)
 - Can find salt setup that goes with this repo here (TODO add salt repo link)
-
-### AWS
 - Salt keys should be pregenerated for minions and put in scripts/aws/keys and preaccepted by the salt master
+  - Can generate keys via ```salt-key --gen-keys=<name>``` command
   - make sure keys are readable by slurm user
   - to accept keys copy $NAME.pub to /etc/salt/pki/master/minions/$NAME (remove .pub)
+
+### AWS
 - ```sudo -u slurm terraform apply -auto-approve tfFiles/```
   - Sets up router instance
   - Can be found in tfFiles/infra.tf
