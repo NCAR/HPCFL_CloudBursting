@@ -6,7 +6,7 @@ Helpful documents related to this repo and its goal can be found in the docs dir
 
 ## Building Scripts
 ```bash
-cd scripts
+cd HPCFL_TerraformScripts/scripts
 # can't build in place because script names are the same as existing dirs
 go build ../addEC2 addEC2/addEC2.go
 go build ../rmEC2 rmEC2/rmEC2.go
