@@ -10,6 +10,8 @@ import (
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
+var config = "/opt/slurm/latest/etc/cloud_config.json"
+
 func tfAdd(names []string) {
 	for _, inst := range names {
 		log.Printf("INFO: Creating Instance %s\n", inst)
@@ -37,10 +39,15 @@ func setup(names []string) {
 }
 
 func main() {
-	//set up logging file
-	cleanup, err := utils.SetupLogging("add")
+	err := utils.ParseConfig(config)
 	if err != nil {
-		log.Fatalf("CRITICAL: %s\n", err)
+		log.Fatalf("CRITICAL: Can't parse config: %s\n", err)
+	}
+	
+	//set up logging file
+	cleanup, err := utils.SetupLogging(utils.Config("log_add"))
+	if err != nil {
+		log.Fatalf("CRITICAL: Can't open log file: %s\n", err)
 	}
 	defer cleanup()
 

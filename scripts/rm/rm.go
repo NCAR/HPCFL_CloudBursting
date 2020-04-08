@@ -9,6 +9,8 @@ import (
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
+var config = "/opt/slurm/latest/etc/cloud_config.json"
+
 func rm(names string) {
 	for _, inst := range slurm.NodeNames(names) {
 		log.Printf("INFO: Removing %s instance\n", inst)
@@ -17,8 +19,9 @@ func rm(names string) {
 }
 
 func main() {
+	utils.ParseConfig(config)
 	//setup logging
-	cleanup, err := utils.SetupLogging("rm")
+	cleanup, err := utils.SetupLogging(utils.Config("log_rm"))
 	if err != nil {
 		log.Fatalf("Critical: %s\n", err)
 	}

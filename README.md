@@ -8,9 +8,13 @@ Helpful documents related to this repo and its goal can be found in the docs dir
 ```bash
 cd HPCFL_TerraformScripts/scripts
 # can't build in place because script names are the same as existing dirs
-go build ../addEC2 addEC2/addEC2.go
-go build ../rmEC2 rmEC2/rmEC2.go
+
+go build -ldflags="-X main.config=</path/to/config/file.json>" -o ../add add/add.go
+go build -ldflags="-X main.config=</path/to/config/file.json>" -o ../rm rm/rm.go
 ```
+- Instead of using the ```ldflags``` flag one could also change the ```config``` variable in add/add.go and rm/rm.go 
+- The config file location defaults to /opt/slurm/latest/etc/cloud_config.json
+- ```config.json``` is an example config file
 
 ## Setup
 
