@@ -6,7 +6,8 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
+
+	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
 //EC2Instance represents an EC2 compute instance
@@ -29,7 +30,7 @@ func (i EC2Instance) Setup() error {
 	case strings.HasPrefix(i.Name(), "aws"):
 		log.Printf("aws: Setting up a compute instance\n")
 		// must be able to deal with the exit status of script is 255 b/c of reboot command
-		err := exec.Command(utils.Config("aws_dir")+"nodeSetup.sh", i.Name(), utils.Config("aws_dir")).Run()
+		err := exec.Command(utils.Config("aws.dir")+"nodeSetup.sh", i.Name(), utils.Config("aws.dir")).Run()
 		if err != nil && !strings.Contains(err.Error(), "255") {
 			return fmt.Errorf("aws: could not setup instance %s due to %v", i.Name(), err)
 		}

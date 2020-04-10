@@ -43,9 +43,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("CRITICAL: Can't parse config: %s\n", err)
 	}
-	
+
 	//set up logging file
-	cleanup, err := utils.SetupLogging(utils.Config("log_add"))
+	cleanup, err := utils.SetupLogging(utils.Config("log.add"))
 	if err != nil {
 		log.Fatalf("CRITICAL: Can't open log file: %s\n", err)
 	}

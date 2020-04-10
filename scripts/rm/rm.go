@@ -21,7 +21,7 @@ func rm(names string) {
 func main() {
 	utils.ParseConfig(config)
 	//setup logging
-	cleanup, err := utils.SetupLogging(utils.Config("log_rm"))
+	cleanup, err := utils.SetupLogging(utils.Config("log.rm"))
 	if err != nil {
 		log.Fatalf("Critical: %s\n", err)
 	}

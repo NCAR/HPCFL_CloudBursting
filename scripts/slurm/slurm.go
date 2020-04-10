@@ -4,7 +4,8 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
+
+	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
 //NodeNames takes a glob string and returns a slice of all of the names contained in the glob
@@ -13,7 +14,7 @@ func NodeNames(glob string) []string {
 	//TODO handle weird glob strings
 	log.Printf("DEBUG:slurm: expanding glob %s\n", glob)
 	//use slurm to expand glob
-	out, err := exec.Command(utils.Config("slurm_dir")+"/bin/scontrol", "show", "hostname", glob).Output()
+	out, err := exec.Command(utils.Config("slurm.dir")+"/bin/scontrol", "show", "hostname", glob).Output()
 	if err != nil {
 		log.Printf("ERROR:slurm: Error expanding nodename glob %s\n", err)
 	}

@@ -1,13 +1,13 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
- 	"encoding/json"
-	"io/ioutil" 
-	"flag"
 )
 
 //SetupLogging sets up logging to the file /var/lib/slurm/<fn>
@@ -37,31 +37,31 @@ func CheckNumArgs(num int, args []string, usage string) error {
 	return nil
 }
 
-func parseMap(m map[string]interface{}, prefix string) error{
+func parseMap(m map[string]interface{}, prefix string) error {
 	var err error
 	for k, v := range m {
 		switch i := v.(type) {
-			case string:
-				flag.String(prefix+k, i, prefix+k)
-				log.Printf("DEBUG:utils: Adding flag %s: %s\n", prefix+k, i)
-			case map[string]interface{}:
-				err = parseMap(i, k+"_")
-			default:
-				fmt.Errorf("Can't parse config option %s: %s", k, i)
+		case string:
+			flag.String(prefix+k, i, prefix+k)
+			log.Printf("DEBUG:utils: Adding flag %s: %s\n", prefix+k, i)
+		case map[string]interface{}:
+			err = parseMap(i, k+".")
+		default:
+			err = fmt.Errorf("Can't parse config option %s: %s", k, i)
 		}
 	}
 	return err
 }
 
 //ParseConfig parses the given config file
-func ParseConfig(filepath string) error{
+func ParseConfig(filepath string) error {
 	f, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return err
 	}
 
 	conf := make(map[string]interface{})
-	
+
 	err = json.Unmarshal(f, &conf)
 	if err != nil {
 		return err
@@ -71,11 +71,19 @@ func ParseConfig(filepath string) error{
 
 	// parse conf into flags
 	flag.Parse()
-
+	for _, option := range []string{"log.add", "log.rm", "terraform.dir", "terraform.tf_files", "aws.dir", "slurm.dir"} {
+		Config(option)
+	}
 	return nil
 }
 
+//Config returns the value of the given config option
+//If the config option was not set the Config panics
 func Config(name string) string {
-	//TODO check flag.Lookup(name)[.Value?] exists before calling .String() on it 
-	return flag.Lookup(name).Value.String()
+	f := flag.Lookup(name)
+	if f == nil {
+		log.Printf("CRITICAL: Config option not set: %s\n", name)
+		os.Exit(1)
+	}
+	return f.Value.String()
 }

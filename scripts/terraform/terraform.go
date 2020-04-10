@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/aws"
-"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
+	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
 //Instance represents a cloud instance
@@ -25,16 +25,16 @@ type Instance interface {
 
 //configCmd sets up the environment to run terraform commands
 func configCmd(cmd *exec.Cmd) {
-	cmd.Dir = utils.Config("terraform_dir")
+	cmd.Dir = utils.Config("terraform.dir")
 	cmd.Env = make([]string, 2)
-	cmd.Env[0] = "PWD=" + utils.Config("terraform_dir")
+	cmd.Env[0] = "PWD=" + utils.Config("terraform.dir")
 	cmd.Env[1] = "HOME=/var/lib/slurm"
 }
 
 //Info returns all of the information terraform knows about the given instance name
 func Info(name string) Instance {
 	//setup and run command
-	cmd := exec.Command(utils.Config("terraform_dir")+"terraform", "output", "-state="+utils.Config("terraform_dir")+"terraform.tfstate", "-json", "-no-color", name)
+	cmd := exec.Command(utils.Config("terraform.dir")+"terraform", "output", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-json", "-no-color", name)
 	configCmd(cmd)
 	out, err := cmd.Output()
 	if err != nil {
@@ -66,28 +66,28 @@ func Info(name string) Instance {
 //Del deletes the config for the given instance
 //NOTE: Update must be called afterwards to update the cloud infrastructure
 func Del(name string) {
-	log.Printf("DEBUG:terraform: deleting config file %s\n", utils.Config("terraform_tf_files")+name+".tf")
-	os.Remove(utils.Config("terraform_tf_files") + name + ".tf")
+	log.Printf("DEBUG:terraform: deleting config file %s\n", utils.Config("terraform.tf_files")+name+".tf")
+	os.Remove(utils.Config("terraform.tf_files") + name + ".tf")
 }
 
 //Update updates the running cloud infrastructure to reflect the current config files
 //Should be run after calls to Add or Del
 func Update() {
-	cmd := exec.Command(utils.Config("terraform_dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform_dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform_tf_files"))
+	cmd := exec.Command(utils.Config("terraform.dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files"))
 	configCmd(cmd)
 	//TODO put a limit on the number of retries
 	for out, err := cmd.CombinedOutput(); err != nil; out, err = cmd.CombinedOutput() {
 		log.Printf("ERROR:terraform: Problem updating cloud resources %s %s\n", out, err)
 		time.Sleep(time.Second * 5)
 		log.Printf("Info:terraform: Trying command again\n")
-		cmd = exec.Command(utils.Config("terraform_dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform_dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform_tf_files"))
+		cmd = exec.Command(utils.Config("terraform.dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files"))
 		configCmd(cmd)
 	}
 }
 
 //TODO test
 func instanceNames() []string {
-	matches, err := filepath.Glob(utils.Config("terraform_tf_files") + "[!infra].tf")
+	matches, err := filepath.Glob(utils.Config("terraform.tf_files") + "[!infra].tf")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,11 +128,11 @@ func Add(name string) Instance {
 
 //add populates the given template with the given Instance
 func add(tmpl string, inst Instance) Instance {
-	t, err := template.New(tmpl).ParseFiles(utils.Config("terraform_dir") + "scripts/terraform/" + tmpl)
+	t, err := template.New(tmpl).ParseFiles(utils.Config("terraform.dir") + "scripts/terraform/" + tmpl)
 	if err != nil {
 		log.Printf("ERROR:terraform: Could not open config file template file\n")
 	}
-	fh, err := os.Create(utils.Config("terraform_tf_files") + inst.Name() + ".tf")
+	fh, err := os.Create(utils.Config("terraform.tf_files") + inst.Name() + ".tf")
 	if err != nil {
 		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", inst.Name(), err)
 	}
