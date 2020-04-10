@@ -71,7 +71,7 @@ func ParseConfig(filepath string) error {
 
 	// parse conf into flags
 	flag.Parse()
-	for _, option := range []string{"log.add", "log.rm", "terraform.dir", "terraform.tf_files", "aws.dir", "slurm.dir"} {
+	for _, option := range []string{"log.add", "log.rm", "terraform.dir", "terraform.tf_files", "aws.ami", "aws.size", "aws.dir", "aws.name", "slurm.dir"} {
 		Config(option)
 	}
 	return nil

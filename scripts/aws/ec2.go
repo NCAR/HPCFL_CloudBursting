@@ -27,7 +27,7 @@ func New(name, privateIP, publicIP string) EC2Instance {
 func (i EC2Instance) Setup() error {
 	//TODO: remove old key from ~/.ssh/known_hosts if exists
 	switch {
-	case strings.HasPrefix(i.Name(), "aws"):
+	case strings.HasPrefix(i.Name(), utils.Config("aws.name")):
 		log.Printf("aws: Setting up a compute instance\n")
 		// must be able to deal with the exit status of script is 255 b/c of reboot command
 		err := exec.Command(utils.Config("aws.dir")+"nodeSetup.sh", i.Name(), utils.Config("aws.dir")).Run()
@@ -65,6 +65,16 @@ func (i EC2Instance) IP() string {
 //Name returns the name of the instance
 func (i EC2Instance) Name() string {
 	return i.name
+}
+
+//AMI returns the instance ami
+func (i EC2Instance) AMI() string {
+	return utils.Config("aws.ami")
+}
+
+//Size returns the instance size
+func (i EC2Instance) Size() string {
+	return utils.Config("aws.size")
 }
 
 //PublicIP returns the publicIP of the instance

@@ -8,13 +8,13 @@
     "tf_files": "/home/slurm/terraform/tfFiles/"
   },
   "aws": {
-    "NOTUSED_ami": "ami-00c03f7f7f2ec15c3",
-    "NOTUSED_instance_type": "t2.micro",
+    "ami": "ami-00c03f7f7f2ec15c3",
+    "size": "t2.micro",
     "NOTUSED_key_pair_name": "hpcfl2",
     "NOTUSED_key_location": "/home/slurm/ssh/hpcfl2",
     "dir": "/home/slurm/terraform/scripts/aws/",
     "NOTUSED_gateway_ip": "192.168.2.10",
-    "NOTUSED_name_prefix": "aws"
+    "name": "aws"
   },
   "slurm": {
     "dir": "/opt/slurm/latest"

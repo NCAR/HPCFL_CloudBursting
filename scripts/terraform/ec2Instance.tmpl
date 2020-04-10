@@ -1,12 +1,10 @@
 resource "aws_instance" "{{ .Name }}" {
-  ami = "ami-00c03f7f7f2ec15c3"
-  instance_type = "t2.micro"
+  ami = "{{ .AMI }}"
+  instance_type = "{{ .Size }}"
   key_name = "hpcfl2"
   tags = {
     Name = "{{ .Name }}"
   }
-
-#  associate_public_ip_address = true
   vpc_security_group_ids = ["${aws_security_group.hpcfl_compute.id}"]
   subnet_id = "${aws_subnet.hpcfl_subnet.id}"
   private_ip = "{{ .IP }}"

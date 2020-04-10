@@ -44,7 +44,7 @@ func Info(name string) Instance {
 	//Demux via instance name
 	//read cmd output json into appropriate struct type, and return it
 	switch {
-	case strings.HasPrefix(name, "aws"):
+	case strings.HasPrefix(name, utils.Config("aws.name")):
 		//json field names defined in ec2Instance.tmpl
 		var instance struct {
 			Name      string `json:"nodeName"`
@@ -113,7 +113,7 @@ func Stop() {
 //NOTE: instance name number must be less than 205
 func Add(name string) Instance {
 	switch {
-	case strings.HasPrefix(name, "aws"):
+	case strings.HasPrefix(name, utils.Config("aws.name")):
 		ip := ip(name)
 		if ip == "" {
 			log.Printf("Error: Unable to add node %s\n", name)
