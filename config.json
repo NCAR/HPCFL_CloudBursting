@@ -8,7 +8,7 @@
     "tf_files": "/home/slurm/terraform/tfFiles/"
   },
   "aws": {
-    "ami": "ami-00c03f7f7f2ec15c3",
+    "ami": "ami-01e36b7901e884a10",
     "size": "t2.micro",
     "NOTUSED_key_pair_name": "hpcfl2",
     "NOTUSED_key_location": "/home/slurm/ssh/hpcfl2",
