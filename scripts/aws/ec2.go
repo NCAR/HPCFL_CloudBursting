@@ -23,6 +23,10 @@ func New(name, privateIP, publicIP, part string) EC2Instance {
 	return EC2Instance{name: name, privateIP: privateIP, publicIP: publicIP, partition: part}
 }
 
+func (i EC2Instance) MakeConfig(mkfunc func(interface{}) error) error {
+	return mkfunc(i)
+}
+
 //Setup does all the provisioning neccesary to setup the instance
 func (i EC2Instance) Setup() error {
 	log.Printf("DEBUG:aws: Setting up a compute instance\n")
@@ -79,12 +83,12 @@ func (i EC2Instance) Name() string {
 
 //AMI returns the instance ami
 func (i EC2Instance) AMI() string {
-	return utils.Config("aws.ami").Self()
+	return utils.Config("partitions."+i.partition+".ami").Self()
 }
 
 //Size returns the instance size
 func (i EC2Instance) Size() string {
-	return utils.Config("aws.size").Self()
+	return utils.Config("partitions."+i.partition+".size").Self()
 }
 
 //PublicIP returns the publicIP of the instance

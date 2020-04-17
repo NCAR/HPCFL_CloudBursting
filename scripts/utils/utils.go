@@ -54,12 +54,11 @@ func (i list) Contains() map[string]Elem {
 
 func (i list) Lookup(s string) Elem {
 	m := strings.SplitN(s, ".", 2)
-	if len(m) < 2 {
-		return i
-	}
-	if _, ok := i.value[m[0]]; !ok {
+	if v, ok := i.value[m[0]]; !ok {
 		log.Printf("DEBUG:utils: key %s not found\n", s)
 		return nil
+	}else if len(m) < 2 {
+		return v
 	}
 	return i.value[m[0]].Lookup(m[1])
 }
@@ -103,11 +102,11 @@ func parseMap(m map[string]interface{}, p *list) {
 	for k, v := range m {
 		switch i := v.(type) {
 		case string:
-			log.Printf("DEBUG:utils: Adding flag %s: %s\n", k, i)
+	//		log.Printf("DEBUG:utils: Adding flag %s: %s\n", k, i)
 			n := item{value: i}
 			p.add(k, n)
 		case map[string]interface{}:
-			log.Printf("Debug:utils: Adding map %s: {%v}\n", k, i)
+	//		log.Printf("Debug:utils: Adding map %s: {%v}\n", k, i)
 			n := list{self: k, value: make(map[string]Elem)}
 			parseMap(i, &n)
 			p.add(k, n)
@@ -138,10 +137,6 @@ func ParseConfig(filepath string) error {
 	parseMap(conf, &config)
 	log.Printf("parsed config\n")
 
-	// parse conf into flags
-	for _, option := range []string{"log.add", "log.rm", "terraform.dir", "terraform.tf_files", "aws.ami", "aws.size", "aws.dir", "aws.name", "slurm.dir"} {
-		Config(option)
-	}
 	return nil
 }
 

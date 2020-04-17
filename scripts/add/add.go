@@ -27,10 +27,16 @@ func setup(names []string) {
 		go func(name string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			inst := terraform.Info(name)
+			log.Printf("%+v\n", inst)
+			if inst == nil {
+				log.Printf("CRITICAL: Could not find instance %s\n", n)
+				return
+			}
 			log.Printf("INFO: Provisioning new instance %s\n", inst)
 			err := inst.Setup()
 			if err != nil {
 				log.Printf("ERROR:add:%v\n", err)
+				return
 			}
 			log.Printf("INFO: Done provisioning %s\n", inst)
 		}(n, &wg)
@@ -43,7 +49,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("CRITICAL: Can't parse config: %s\n", err)
 	}
-
 	//set up logging file
 	cleanup, err := utils.SetupLogging(utils.Config("log.add").Self())
 	if err != nil {

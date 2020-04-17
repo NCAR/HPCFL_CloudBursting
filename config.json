@@ -15,7 +15,7 @@
 	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
 	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
       "teardown": "",
-	  "regex": "^aws\d$"
+	  "regex": "^aws[0-9]$"
     },
     "aws2": {
 	  "type": "aws",
@@ -24,7 +24,7 @@
 	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
 	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
       "teardown": "",
-      "name": "^aws\d\d$"
+      "regex": "^aws[0-9][0-9]$"
 	}
   },
   "slurm": {

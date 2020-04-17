@@ -10,7 +10,8 @@ import (
 	"regexp"
 	"text/template"
 	"time"
-
+	"fmt"
+	"strings"
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/aws"
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
@@ -35,7 +36,12 @@ func configCmd(cmd *exec.Cmd) {
 func partition(name string) utils.Elem {
 	//figure out what partition node is from
 	for _, part := range utils.Config("partitions").Contains() {
-		match, err := regexp.Match(part.Lookup("regex").Self(), []byte(name))
+		regex := part.Lookup("regex")
+		if regex == nil {
+			log.Printf("CRITICAL: could not find regex for partition %s\n", part.Self())
+			continue
+		}
+		match, err := regexp.Match(regex.Self(), []byte(name))
 		if err != nil {
 			log.Printf("WARNING:terraform: error while finding %s's partition: %s\n", name, err)
 		}
@@ -61,7 +67,7 @@ func Info(name string) Instance {
 		log.Printf("Error: Don't know how to get info for instance %s\n", name)
 		return nil
 	}
-	switch part.Self() {
+	switch part.Lookup("type").Self() {
 	case "aws":
 		//json field names defined in ec2Instance.tmpl
 		var instance struct {
@@ -136,7 +142,7 @@ func Stop() {
 //Add creates a config file for the given instance, but does not create it
 //NOTE: Update must be called afterwards to update the cloud infrastructure
 //NOTE: instance name number must be less than 205
-func Add(name string) Instance {
+func Add(name string) error {
 	part := partition(name)
 	switch part.Lookup("type").Self() {
 	case "aws":
@@ -145,29 +151,24 @@ func Add(name string) Instance {
 			log.Printf("Error: Unable to add node %s\n", name)
 			return nil
 		}
-		return add(part.Lookup("template").Self(), aws.New(name, ip, "", part.Self()))
+		return aws.New(name, ip, "", part.Self()).MakeConfig(confFunc(part.Lookup("template").Self(), name))
 	default:
-		log.Printf("Error: don't know how to add instance %s\n", name)
-		return nil
+		return fmt.Errorf("Error: don't know how to add instance %s\n", name)
 	}
 }
 
 //add populates the given template with the given Instance
-func add(tmpl string, inst Instance) Instance {
-	t, err := template.New(tmpl).ParseFiles(utils.Config("terraform.dir").Self() + "scripts/terraform/" + tmpl)
+func confFunc(tmpl, name string ) (func(interface{}) error){
+	n := strings.Split(tmpl, "/")
+	t, err := template.New(n[len(n)-1]).ParseFiles(tmpl)
 	if err != nil {
-		log.Printf("ERROR:terraform: Could not open config file template file\n")
+		log.Printf("ERROR:terraform: Could not open template file %s\n", tmpl)
 	}
-	fh, err := os.Create(utils.Config("terraform.tf_files").Self() + inst.Name() + ".tf")
+	fh, err := os.Create(utils.Config("terraform.tf_files").Self() + name + ".tf")
 	if err != nil {
-		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", inst.Name(), err)
+		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", name, err)
 	}
-	defer fh.Close()
-	err = t.Execute(fh, inst)
-	if err != nil {
-		log.Printf("ERROR:terraform: Could not write to config file for instance %s %s\n", inst.Name(), err)
-	}
-	return inst
+	return (func(inst interface{}) error {err := t.Execute(fh, inst); fh.Close(); return err})
 }
 
 func ip(name string) string {
