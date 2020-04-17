@@ -14,7 +14,7 @@ func NodeNames(glob string) []string {
 	//TODO handle weird glob strings
 	log.Printf("DEBUG:slurm: expanding glob %s\n", glob)
 	//use slurm to expand glob
-	out, err := exec.Command(utils.Config("slurm.dir")+"/bin/scontrol", "show", "hostname", glob).Output()
+	out, err := exec.Command(utils.Config("slurm.dir").Self()+"/bin/scontrol", "show", "hostname", glob).Output()
 	if err != nil {
 		log.Printf("ERROR:slurm: Error expanding nodename glob %s\n", err)
 	}

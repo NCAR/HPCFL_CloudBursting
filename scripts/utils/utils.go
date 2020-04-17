@@ -3,12 +3,74 @@ package utils
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
+
+var config list
+
+//Elem represents an element in config
+//It can either be a map containg more elements that can be looked up
+//or a string
+type Elem interface {
+	//value of self
+	Contains() map[string]Elem
+	//value of a child
+	Lookup(string) Elem
+	//Elem's value
+	Self() string
+}
+
+type item struct {
+	value string
+}
+
+func (i item) Contains() map[string]Elem {
+	return nil
+}
+
+func (i item) Lookup(s string) Elem {
+	if s == "" {
+		return i
+	}
+	return nil
+}
+
+func (i item) Self() string {
+	return i.value
+}
+
+type list struct {
+	self  string
+	value map[string]Elem
+}
+
+func (i list) Contains() map[string]Elem {
+	return i.value
+}
+
+func (i list) Lookup(s string) Elem {
+	m := strings.SplitN(s, ".", 2)
+	if len(m) < 2 {
+		return i
+	}
+	if _, ok := i.value[m[0]]; !ok {
+		log.Printf("DEBUG:utils: key %s not found\n", s)
+		return nil
+	}
+	return i.value[m[0]].Lookup(m[1])
+}
+
+func (i list) Self() string {
+	return i.self
+}
+
+func (i list) add(k string, v Elem) {
+	i.value[k] = v
+}
 
 //SetupLogging sets up logging to the file /var/lib/slurm/<fn>
 //returned func pointer should be defered to do cleanup
@@ -37,20 +99,22 @@ func CheckNumArgs(num int, args []string, usage string) error {
 	return nil
 }
 
-func parseMap(m map[string]interface{}, prefix string) error {
-	var err error
+func parseMap(m map[string]interface{}, p *list) {
 	for k, v := range m {
 		switch i := v.(type) {
 		case string:
-			flag.String(prefix+k, i, prefix+k)
-			log.Printf("DEBUG:utils: Adding flag %s: %s\n", prefix+k, i)
+			log.Printf("DEBUG:utils: Adding flag %s: %s\n", k, i)
+			n := item{value: i}
+			p.add(k, n)
 		case map[string]interface{}:
-			err = parseMap(i, k+".")
+			log.Printf("Debug:utils: Adding map %s: {%v}\n", k, i)
+			n := list{self: k, value: make(map[string]Elem)}
+			parseMap(i, &n)
+			p.add(k, n)
 		default:
-			err = fmt.Errorf("Can't parse config option %s: %s", k, i)
+			log.Fatalf("Can't parse config option %s: %s", k, i)
 		}
 	}
-	return err
 }
 
 //ParseConfig parses the given config file
@@ -67,10 +131,14 @@ func ParseConfig(filepath string) error {
 		return err
 	}
 
-	parseMap(conf, "")
+	conList := make(map[string]Elem)
+	config = list{self: "", value: conList}
+
+	log.Printf("about to parse config\n")
+	parseMap(conf, &config)
+	log.Printf("parsed config\n")
 
 	// parse conf into flags
-	flag.Parse()
 	for _, option := range []string{"log.add", "log.rm", "terraform.dir", "terraform.tf_files", "aws.ami", "aws.size", "aws.dir", "aws.name", "slurm.dir"} {
 		Config(option)
 	}
@@ -79,11 +147,6 @@ func ParseConfig(filepath string) error {
 
 //Config returns the value of the given config option
 //If the config option was not set the Config panics
-func Config(name string) string {
-	f := flag.Lookup(name)
-	if f == nil {
-		log.Printf("CRITICAL: Config option not set: %s\n", name)
-		os.Exit(1)
-	}
-	return f.Value.String()
+func Config(name string) Elem {
+	return config.Lookup(name)
 }

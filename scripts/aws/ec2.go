@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os/exec"
@@ -15,36 +14,47 @@ type EC2Instance struct {
 	name      string
 	privateIP string
 	publicIP  string
+	partition string
 }
 
 //New creates and returns a new EC2Instance
 //NOTE: Does not create or setup actual cloud resources
-func New(name, privateIP, publicIP string) EC2Instance {
-	return EC2Instance{name: name, privateIP: privateIP, publicIP: publicIP}
+func New(name, privateIP, publicIP, part string) EC2Instance {
+	return EC2Instance{name: name, privateIP: privateIP, publicIP: publicIP, partition: part}
 }
 
 //Setup does all the provisioning neccesary to setup the instance
 func (i EC2Instance) Setup() error {
-	//TODO: remove old key from ~/.ssh/known_hosts if exists
-	switch {
-	case strings.HasPrefix(i.Name(), utils.Config("aws.name")):
-		log.Printf("aws: Setting up a compute instance\n")
-		// must be able to deal with the exit status of script is 255 b/c of reboot command
-		err := exec.Command(utils.Config("aws.dir")+"nodeSetup.sh", i.Name(), utils.Config("aws.dir")).Run()
-		if err != nil && !strings.Contains(err.Error(), "255") {
-			return fmt.Errorf("aws: could not setup instance %s due to %v", i.Name(), err)
-		}
-		/*
-			case strings.HasPrefix(i.Name(), "router"):
-				log.Printf("aws: Setting up a router instance\n")
-				//need root to run wgInstall b/c it sets up wireguard vpn interface
-				err := exec.Command(utils.Config("aws_dir")+"wgInstall.sh", i.Name(), i.PublicIP()).Run()
-				if err != nil {
-					log.Printf("ERROR:aws: error setting up instance %s %s\n", i.Name(), err)
-				}
-		*/
-	default:
-		return errors.New("aws: Unable to setup unrecognized node " + i.name)
+	log.Printf("DEBUG:aws: Setting up a compute instance\n")
+	// must be able to deal with the exit status of script is 255 b/c of reboot command
+	setup := utils.Config("partitions").Lookup(i.partition + ".setup").Self()
+	if setup == "" {
+		log.Printf("DEBUG:aws: No setup required\n")
+		return nil
+	}
+	dirSplit := strings.SplitAfter(setup, "/")
+	dir := strings.Join(dirSplit[:len(dirSplit)-1], "")
+	err := exec.Command(setup, i.Name(), dir).Run()
+	if err != nil && !strings.Contains(err.Error(), "255") {
+		return fmt.Errorf("WARNING:aws: could not setup instance %s due to %v", i.Name(), err)
+	}
+	return nil
+}
+
+//Teardown does any cleanup neccessary to cleanup an instance
+func (i EC2Instance) Teardown() error {
+	log.Printf("DEBUG:aws: Tearing down a compute instance\n")
+	// must be able to deal with the exit status of script is 255 b/c of reboot command
+	setup := utils.Config("partitions").Lookup(i.partition + ".teardown").Self()
+	if setup == "" {
+		log.Printf("DEBUG:aws: No teardown required\n")
+		return nil
+	}
+	dirSplit := strings.SplitAfter(setup, "/")
+	dir := strings.Join(dirSplit[:len(dirSplit)-1], "")
+	err := exec.Command(setup, i.Name(), dir).Run()
+	if err != nil && !strings.Contains(err.Error(), "255") {
+		return fmt.Errorf("WARNING:aws: could not teardown instance %s due to %v", i.Name(), err)
 	}
 	return nil
 }
@@ -69,12 +79,12 @@ func (i EC2Instance) Name() string {
 
 //AMI returns the instance ami
 func (i EC2Instance) AMI() string {
-	return utils.Config("aws.ami")
+	return utils.Config("aws.ami").Self()
 }
 
 //Size returns the instance size
 func (i EC2Instance) Size() string {
-	return utils.Config("aws.size")
+	return utils.Config("aws.size").Self()
 }
 
 //PublicIP returns the publicIP of the instance

@@ -45,7 +45,7 @@ func main() {
 	}
 
 	//set up logging file
-	cleanup, err := utils.SetupLogging(utils.Config("log.add"))
+	cleanup, err := utils.SetupLogging(utils.Config("log.add").Self())
 	if err != nil {
 		log.Fatalf("CRITICAL: Can't open log file: %s\n", err)
 	}

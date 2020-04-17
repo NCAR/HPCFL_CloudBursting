@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"regexp"
 	"text/template"
 	"time"
 
@@ -21,30 +21,48 @@ type Instance interface {
 	IP() string
 	String() string
 	Setup() error
+	Teardown() error
 }
 
 //configCmd sets up the environment to run terraform commands
 func configCmd(cmd *exec.Cmd) {
-	cmd.Dir = utils.Config("terraform.dir")
+	cmd.Dir = utils.Config("terraform.dir").Self()
 	cmd.Env = make([]string, 2)
-	cmd.Env[0] = "PWD=" + utils.Config("terraform.dir")
+	cmd.Env[0] = "PWD=" + utils.Config("terraform.dir").Self()
 	cmd.Env[1] = "HOME=/var/lib/slurm"
+}
+
+func partition(name string) utils.Elem {
+	//figure out what partition node is from
+	for _, part := range utils.Config("partitions").Contains() {
+		match, err := regexp.Match(part.Lookup("regex").Self(), []byte(name))
+		if err != nil {
+			log.Printf("WARNING:terraform: error while finding %s's partition: %s\n", name, err)
+		}
+		if match {
+			return part
+		}
+	}
+	log.Printf("ERROR:terraform: Could not find partition for node %s\n", name)
+	return nil
 }
 
 //Info returns all of the information terraform knows about the given instance name
 func Info(name string) Instance {
 	//setup and run command
-	cmd := exec.Command(utils.Config("terraform.dir")+"terraform", "output", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-json", "-no-color", name)
+	cmd := exec.Command(utils.Config("terraform.dir").Self()+"terraform", "output", "-state="+utils.Config("terraform.dir").Self()+"terraform.tfstate", "-json", "-no-color", name)
 	configCmd(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		log.Printf("ERROR:terraform: Could not get info for %s %s\n", name, err)
 	}
-
-	//Demux via instance name
-	//read cmd output json into appropriate struct type, and return it
-	switch {
-	case strings.HasPrefix(name, utils.Config("aws.name")):
+	part := partition(name)
+	if part == nil {
+		log.Printf("Error: Don't know how to get info for instance %s\n", name)
+		return nil
+	}
+	switch part.Self() {
+	case "aws":
 		//json field names defined in ec2Instance.tmpl
 		var instance struct {
 			Name      string `json:"nodeName"`
@@ -55,39 +73,46 @@ func Info(name string) Instance {
 		if err != nil {
 			log.Printf("ERROR:terraform: Could not decode info for %s %s\n", name, err)
 		}
-		return aws.New(instance.Name, instance.PrivateIP, instance.PublicIP)
+		return aws.New(instance.Name, instance.PrivateIP, instance.PublicIP, part.Self())
 
 	default:
-		log.Printf("Error: Don't know how to get info for instance %s\n", name)
+		log.Printf("ERROR:terraform: Unrecognized node type %s for node %s\n", part.Lookup("type").Self(), name)
 		return nil
+
 	}
 }
 
 //Del deletes the config for the given instance
 //NOTE: Update must be called afterwards to update the cloud infrastructure
 func Del(name string) {
-	log.Printf("DEBUG:terraform: deleting config file %s\n", utils.Config("terraform.tf_files")+name+".tf")
-	os.Remove(utils.Config("terraform.tf_files") + name + ".tf")
+	//TODO if Info takes a while maybe check this is neccessary before doing
+	// e.g. check n has a teardown script
+	n := Info(name)
+	if n != nil {
+		n.Teardown()
+	}
+	log.Printf("DEBUG:terraform: deleting config file %s\n", utils.Config("terraform.tf_files").Self()+name+".tf")
+	os.Remove(utils.Config("terraform.tf_files").Self() + name + ".tf")
 }
 
 //Update updates the running cloud infrastructure to reflect the current config files
 //Should be run after calls to Add or Del
 func Update() {
-	cmd := exec.Command(utils.Config("terraform.dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files"))
+	cmd := exec.Command(utils.Config("terraform.dir").Self()+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir").Self()+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files").Self())
 	configCmd(cmd)
 	//TODO put a limit on the number of retries
 	for out, err := cmd.CombinedOutput(); err != nil; out, err = cmd.CombinedOutput() {
 		log.Printf("ERROR:terraform: Problem updating cloud resources %s %s\n", out, err)
 		time.Sleep(time.Second * 5)
 		log.Printf("Info:terraform: Trying command again\n")
-		cmd = exec.Command(utils.Config("terraform.dir")+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir")+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files"))
+		cmd = exec.Command(utils.Config("terraform.dir").Self()+"terraform", "apply", "-auto-approve", "-state="+utils.Config("terraform.dir").Self()+"terraform.tfstate", "-lock=true", "-input=false", utils.Config("terraform.tf_files").Self())
 		configCmd(cmd)
 	}
 }
 
 //TODO test
 func instanceNames() []string {
-	matches, err := filepath.Glob(utils.Config("terraform.tf_files") + "[!infra].tf")
+	matches, err := filepath.Glob(utils.Config("terraform.tf_files").Self() + "[!infra].tf")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,14 +137,15 @@ func Stop() {
 //NOTE: Update must be called afterwards to update the cloud infrastructure
 //NOTE: instance name number must be less than 205
 func Add(name string) Instance {
-	switch {
-	case strings.HasPrefix(name, utils.Config("aws.name")):
+	part := partition(name)
+	switch part.Lookup("type").Self() {
+	case "aws":
 		ip := ip(name)
 		if ip == "" {
 			log.Printf("Error: Unable to add node %s\n", name)
 			return nil
 		}
-		return add("ec2Instance.tmpl", aws.New(name, ip, ""))
+		return add(part.Lookup("template").Self(), aws.New(name, ip, "", part.Self()))
 	default:
 		log.Printf("Error: don't know how to add instance %s\n", name)
 		return nil
@@ -128,11 +154,11 @@ func Add(name string) Instance {
 
 //add populates the given template with the given Instance
 func add(tmpl string, inst Instance) Instance {
-	t, err := template.New(tmpl).ParseFiles(utils.Config("terraform.dir") + "scripts/terraform/" + tmpl)
+	t, err := template.New(tmpl).ParseFiles(utils.Config("terraform.dir").Self() + "scripts/terraform/" + tmpl)
 	if err != nil {
 		log.Printf("ERROR:terraform: Could not open config file template file\n")
 	}
-	fh, err := os.Create(utils.Config("terraform.tf_files") + inst.Name() + ".tf")
+	fh, err := os.Create(utils.Config("terraform.tf_files").Self() + inst.Name() + ".tf")
 	if err != nil {
 		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", inst.Name(), err)
 	}

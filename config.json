@@ -7,14 +7,25 @@
     "dir": "/home/slurm/terraform/",
     "tf_files": "/home/slurm/terraform/tfFiles/"
   },
-  "aws": {
-    "ami": "ami-01e36b7901e884a10",
-    "size": "t2.micro",
-    "NOTUSED_key_pair_name": "hpcfl2",
-    "NOTUSED_key_location": "/home/slurm/ssh/hpcfl2",
-    "dir": "/home/slurm/terraform/scripts/aws/",
-    "NOTUSED_gateway_ip": "192.168.2.10",
-    "name": "aws"
+  "partitions": {
+    "aws1": {
+      "type": "aws",
+      "ami": "ami-01e36b7901e884a10",
+      "size": "t2.micro",
+	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
+      "teardown": "",
+	  "regex": "^aws\d$"
+    },
+    "aws2": {
+	  "type": "aws",
+      "ami": "ami-01e36b7901e884a10",
+      "size": "t2.micro",
+	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
+      "teardown": "",
+      "name": "^aws\d\d$"
+	}
   },
   "slurm": {
     "dir": "/opt/slurm/latest"
