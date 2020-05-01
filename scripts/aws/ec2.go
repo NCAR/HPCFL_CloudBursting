@@ -23,10 +23,6 @@ func New(name, privateIP, publicIP, part string) EC2Instance {
 	return EC2Instance{name: name, privateIP: privateIP, publicIP: publicIP, partition: part}
 }
 
-func (i EC2Instance) MakeConfig(mkfunc func(interface{}) error) error {
-	return mkfunc(i)
-}
-
 //Setup does all the provisioning neccesary to setup the instance
 func (i EC2Instance) Setup() error {
 	log.Printf("DEBUG:aws: Setting up a compute instance\n")

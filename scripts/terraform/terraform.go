@@ -2,16 +2,17 @@ package terraform
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
-	"fmt"
-	"strings"
+
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/aws"
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
@@ -151,14 +152,14 @@ func Add(name string) error {
 			log.Printf("Error: Unable to add node %s\n", name)
 			return nil
 		}
-		return aws.New(name, ip, "", part.Self()).MakeConfig(confFunc(part.Lookup("template").Self(), name))
+		return confFunc(part.Lookup("template").Self(), name)(aws.New(name, ip, "", part.Self()))
 	default:
 		return fmt.Errorf("Error: don't know how to add instance %s\n", name)
 	}
 }
 
 //add populates the given template with the given Instance
-func confFunc(tmpl, name string ) (func(interface{}) error){
+func confFunc(tmpl, name string) func(interface{}) error {
 	n := strings.Split(tmpl, "/")
 	t, err := template.New(n[len(n)-1]).ParseFiles(tmpl)
 	if err != nil {
@@ -168,7 +169,7 @@ func confFunc(tmpl, name string ) (func(interface{}) error){
 	if err != nil {
 		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", name, err)
 	}
-	return (func(inst interface{}) error {err := t.Execute(fh, inst); fh.Close(); return err})
+	return (func(inst interface{}) error { err := t.Execute(fh, inst); fh.Close(); return err })
 }
 
 func ip(name string) string {
