@@ -38,6 +38,7 @@ PrivateData=cloud # technically optional, but required to make sinfo etc. output
 - (TODO add link to website)
 
 ### Salt
+- Example salt setup can be found [here](https://github.com/NCAR/HPCFL_CloudBurstingSalt)
 - Used for provisioning instances
 - Need to update ip of salt master in setup scripts (TODO make this easy)
 - Can find salt setup that goes with this repo here (TODO add salt repo link)
