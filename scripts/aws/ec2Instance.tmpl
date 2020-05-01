@@ -5,6 +5,9 @@ resource "aws_instance" "{{ .Name }}" {
   tags = {
     Name = "{{ .Name }}"
   }
+  root_block_device {
+    delete_on_termination = true
+  }
   vpc_security_group_ids = ["${aws_security_group.hpcfl_compute.id}"]
   subnet_id = "${aws_subnet.hpcfl_subnet.id}"
   private_ip = "{{ .IP }}"
