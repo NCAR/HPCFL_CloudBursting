@@ -70,6 +70,15 @@ output = json
   3. Update salt to do the rest of the provisioning neccesarry for the new instance types
   4. Update slurm.conf so slurm knows about the new instances
 
+## Notes
+### Slurm
+The output of sinfo and scontrol can be quite criptic for cloud nodes. Here are some notes on what some of the characters mean when contained in a nodes `state`
+- `~` in power saving mode
+- `#` powering up / being configured
+- `$` in a maintenance reservation
+- `@` scheduled to reboot
+- `\*` unreachable
+- `%` powering off
 
 ## License
 ```
