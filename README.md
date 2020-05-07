@@ -63,6 +63,24 @@ region = us-east-2
 output = json
 ```
 
+## Starting
+### AWS
+- after completing all of the setup steps to start all required infrastructure to use aws nodes run:
+  - `./terraform apply -auto-approve tfFiles`
+  - after a while (~1min) this will finish with the last bit of output looking similar to:
+```
+router0 = {
+  "nodeName" = "router0"
+  "privateIP" = "192.168.2.10"
+  "publicIP" = "3.16.135.102"
+}
+```
+  - terraform has configured and started an ec2 instance called `router0` with a publically addressable ip `3.16.135.102` (this will change each time the instance is started, and an ip of `192.168.2.10` on the a private subnet (this is static)
+  - to connect this instance to your on premise network over a vpn tunnel run `./scripts/aws/wgInstall.sh router0 3.16.135.102` as a user with sudo priveleges
+    - this can take a few minutes to finish
+    - this provisions `router0`, then sets up a wireguared vpn connection between the local machine and `router0`   
+  - now you are ready to run jobs!
+
 ### Other Clouds
 - Other clouds are easily added one simply needs to:
   1. Create a package for that cloud that implements a struct that fills the utils.Instance interface
