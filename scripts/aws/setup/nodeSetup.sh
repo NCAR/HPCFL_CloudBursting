@@ -29,13 +29,17 @@
 #OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+SSHKEY='/home/slurm/.ssh/hpcfl2'
+
+# make sure old key isn't in know hosts
+sed -i '/'$1'/d' ~/.ssh/known_hosts
+
 sleep 10
 tries=0
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2saltInstall.sh" centos@$1:~/
-ret=$?
+ret=255
 while [ $ret -ne 0 -a $tries -lt 20 ]; do
   sleep 20
-  scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2saltInstall.sh" centos@$1:~/
+  scp -oStrictHostKeyChecking=no -i$SSHKEY "$2saltInstall.sh" centos@$1:~/
   ret=$?
   tries=$((tries+=1))
   #echo $tries
@@ -45,10 +49,10 @@ if [ $ret -ne 0 ]; then
   exit 7
 fi
 
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2salt-minion.service" centos@$1:~/
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2ifcfg-eth0" centos@$1:~/
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2minion" centos@$1:~/
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2keys/$1.pem" centos@$1:~/minion.pem
-scp -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 "$2keys/$1.pub" centos@$1:~/minion.pub
-ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 centos@$1 "chmod +x saltInstall.sh"
-ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i/home/slurm/.ssh/hpcfl2 centos@$1 "./saltInstall.sh $1"
+scp -i$SSHKEY "$2salt-minion.service" centos@$1:~/
+scp -i$SSHKEY "$2ifcfg-eth0" centos@$1:~/
+scp -i$SSHKEY "$2minion" centos@$1:~/
+scp -i$SSHKEY "$2keys/$1.pem" centos@$1:~/minion.pem
+scp -i$SSHKEY "$2keys/$1.pub" centos@$1:~/minion.pub
+ssh -i$SSHKEY centos@$1 "chmod +x saltInstall.sh"
+ssh -i$SSHKEY centos@$1 "./saltInstall.sh $1"

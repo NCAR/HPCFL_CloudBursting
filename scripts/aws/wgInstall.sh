@@ -31,14 +31,23 @@
 
 function remote_run {
     #TODO don't ignore hostkey every time, only the first
-    ssh -i$SSHKEY "ec2-user@"$IP "$1"
+    ssh -i$SSHKEY "centos@"$IP "$1"
 }
 
 function initial_setup {
-	ssh -i$SSHKEY -oStrictHostKeyChecking=no "ec2-user@"$IP "sudo yum update -y"
-	remote_run "sudo amazon-linux-extras install epel -y"
-	remote_run "sudo curl -Lo /etc/yum.repos.d/wireguard.repo https://copr.fedorainfracloud.org/coprs/jdoss/wireguard/repo/epel-7/jdoss-wireguard-epel-7.repo"
-	remote_run "sudo yum install wireguard-dkms wireguard-tools -y"
+	tries=0
+	ret=255
+	while [ $ret -ne 0 -a $tries -lt 20 ]; do
+	  ssh -i$SSHKEY -oStrictHostKeyChecking=no "centos@"$IP "echo connected"
+	  ret=$?
+	  sleep 20
+	  tries=$((tries+=1))
+	  #echo $tries
+	done
+	ssh -i$SSHKEY "centos@"$IP "sudo yum update -y"
+	remote_run "sudo yum install -y epel-release https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm"
+	remote_run "sudo yum install -y yum-plugin-elrepo"
+	remote_run "sudo yum install -y kmod-wireguard wireguard-tools"
 	remote_run "sudo hostnamectl set-hostname $HOSTNAME"
 	remote_run "sudo reboot"
 
@@ -48,34 +57,27 @@ function initial_setup {
 }
 
 function wg_setup {
-tries=0
-ret=255
-while [ $ret -ne 0 -a $tries -lt 20 ]; do
-  ssh -i$SSHKEY "ec2-user@"$IP "echo connected"
-  ret=$?
-  sleep 20
-  tries=$((tries+=1))
-  #echo $tries
-done
-	remote_run "sudo dkms autoinstall"
+	tries=0
+	ret=255
+	while [ $ret -ne 0 -a $tries -lt 20 ]; do
+	  ssh -i$SSHKEY "centos@"$IP "echo connected"
+	  ret=$?
+	  sleep 20
+	  tries=$((tries+=1))
+	  #echo $tries
+	done
+	if [ $ret -ne 0 ]; then
+		exit 7
+	fi
+
 	remote_run "sudo sysctl -w net.ipv4.ip_forward=1"
-	remote_run "ls /lib/modules/4.14.146-120.181.amzn2.x86_64/kernel/net/"
-	remote_run "sudo modprobe ipv6"
-	remote_run "sudo modprobe udp_tunnel"
-	remote_run "sudo modprobe ip6_udp_tunnel"
-	echo "attempt 1 at modprobe wireguard"
-	remote_run "sudo lsmod"
-	echo "depmod -a :"
-	remote_run "sudo depmod -a" 
-	echo "lsmod:"
-	remote_run "sudo lsmod"
-	echo "modprobe"
-	remote_run "sudo modprobe wireguard"
-	echo "lsmod:" 
-	remote_run "sudo lsmod"
+	#remote_run "sudo modprobe ipv6"
+	#remote_run "sudo modprobe udp_tunnel"
+	#remote_run "sudo modprobe ip6_udp_tunnel"
+	#remote_run "sudo depmod -a" 
+	#remote_run "sudo modprobe wireguard"
 	set -e
-	remote_run "sudo modprobe wireguard"
-	echo "it worked"
+	#remote_run "sudo modprobe wireguard"
 	# create remote keys
 	remote_run "umask 077; wg genkey > private"
 	remote_run "wg pubkey < private > public"
@@ -119,4 +121,6 @@ sudo ip link del wg0
 initial_setup 
 wg_setup
 remote_run "sudo iptables -t nat -A POSTROUTING -o eth0 ! -d 192.168.2.0/24 -j MASQUERADE"
+# dont need to ssh into again so delete from known_hosts
+sed -i '/'$IP'/d' ~/.ssh/known_hosts
 echo "$1 set up"

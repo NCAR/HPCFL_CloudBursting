@@ -10,22 +10,22 @@
   "partitions": {
     "aws1": {
       "type": "aws",
-      "ami": "ami-01e36b7901e884a10",
+      "ami": "ami-098f55b4287a885ba",
       "size": "t2.micro",
-	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
-	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
-      "teardown": "",
-	  "regex": "^aws[0-9]$"
+      "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+      "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
+      "teardown": "/home/slurm/terraform/scripts/aws/setup/teardown.sh",
+      "regex": "^aws[0-9]$"
     },
     "aws2": {
-	  "type": "aws",
-      "ami": "ami-01e36b7901e884a10",
+      "type": "aws",
+      "ami": "ami-098f55b4287a885ba",
       "size": "t2.micro",
-	  "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
-	  "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
-      "teardown": "",
+      "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+      "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
+      "teardown": "/home/slurm/terraform/scripts/aws/setup/teardown.sh",
       "regex": "^aws[0-9][0-9]$"
-	}
+    }
   },
   "slurm": {
     "dir": "/opt/slurm/latest"

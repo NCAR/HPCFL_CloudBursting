@@ -1,6 +1,6 @@
 provider "aws" {
   profile = "default"
-  region = "us-east-2"
+  region = "us-west-1"
 }
 
 resource "aws_vpc" "hpcfl_vpc" {
@@ -89,7 +89,7 @@ resource "aws_security_group" "hpcfl_wireguard" {
 resource "aws_subnet" "hpcfl_subnet" {
   vpc_id = "${aws_vpc.hpcfl_vpc.id}"
   cidr_block = "192.168.2.0/24"
-  availability_zone = "us-east-2a"
+  availability_zone = "us-west-1b"
 }
 
 resource "aws_key_pair" "hpcfl2" {
@@ -98,12 +98,16 @@ resource "aws_key_pair" "hpcfl2" {
 }
 
 resource "aws_instance" "router0" {
-  ami = "ami-00c03f7f7f2ec15c3"
+  ami = "ami-098f55b4287a885ba"
   instance_type = "t2.micro"
   key_name = "hpcfl2"
   source_dest_check = false
   tags = {
     Name = "router0"
+  }
+
+  root_block_device {
+    delete_on_termination = true
   }
 
   associate_public_ip_address = true
