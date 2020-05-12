@@ -2,10 +2,10 @@
 Copyright (c) 2020, University Corporation for Atmospheric Research
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, 
+1. Redistributions of source code must retain the above copyright notice,
 this list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -16,14 +16,14 @@ and/or other materials provided with the distribution.
 may be used to endorse or promote products derived from this software without
 specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -88,7 +88,7 @@ func (i list) Lookup(s string) Elem {
 	if v, ok := i.value[m[0]]; !ok {
 		log.Printf("DEBUG:utils: key %s not found\n", s)
 		return nil
-	}else if len(m) < 2 {
+	} else if len(m) < 2 {
 		return v
 	}
 	return i.value[m[0]].Lookup(m[1])
@@ -133,11 +133,11 @@ func parseMap(m map[string]interface{}, p *list) {
 	for k, v := range m {
 		switch i := v.(type) {
 		case string:
-	//		log.Printf("DEBUG:utils: Adding flag %s: %s\n", k, i)
+			//		log.Printf("DEBUG:utils: Adding flag %s: %s\n", k, i)
 			n := item{value: i}
 			p.add(k, n)
 		case map[string]interface{}:
-	//		log.Printf("Debug:utils: Adding map %s: {%v}\n", k, i)
+			//		log.Printf("Debug:utils: Adding map %s: {%v}\n", k, i)
 			n := list{self: k, value: make(map[string]Elem)}
 			parseMap(i, &n)
 			p.add(k, n)

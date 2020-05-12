@@ -88,7 +88,7 @@ func main() {
 	// anything left in set was not in terraform
 	// scheduler wants these instances, but they are in a weird state
 	// so probably safest to just kill them
-	for inst, _ := range found {
+	for inst := range found {
 	terraform.Del(inst)
 	}
 
