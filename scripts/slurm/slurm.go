@@ -35,7 +35,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-
+	"regexp"
 	"github.com/NCAR/HPCFL_TerraformScripts/scripts/utils"
 )
 
@@ -52,4 +52,84 @@ func NodeNames(glob string) []string {
 	names := strings.Split(string(out), "\n")
 	//last element is empty/just whitespace so drop it
 	return names[:len(names)-1]
+}
+
+//On returns a slice of the currently on, or starting up cloud nodes
+//It also resets the state on any "broken" nodes
+func On() []string {
+	on, _, broken := status()
+	fixBroken(broken)
+	return on
+}
+
+//status returns on, off, broken list of node names
+//returns nil if no nodes in that state
+//nodes that are powering up are considered on
+//nodes that are powering down are considered off
+func status() ([]string, []string, []string) {
+	//run scontrol show node
+	//Split on empty lines
+	//Ignore nodes that don't have ActiveFeatures=cloud
+	//Nodes with 'state=IDLE+CLOUD+POWER ' are off
+	//'State=ALLOCATED#+CLOUD ' are turning on
+	//'State=IDLE#+CLOUD ' are turning on
+	//'State=IDLE+CLOUD' are on
+	//'State=ALLOCATED+CLOUD ' are on
+	//'State=IDLE+CLOUD+COMPLETING' are on
+	//'State=IDLE+CLOUD+POWERING_DOWN ' are turning off
+	//everything else should be considered broken
+
+	var on, off, broken []string
+
+	out, err := exec.Command(utils.Config("slurm.dir").Self()+"/bin/scontrol", "show", "node").Output()
+	if err != nil {
+		log.Printf("ERROR:slurm: Error getting node states %s\n", err)
+	}
+	//split output by which node it is about
+	nodes := strings.Split(string(out), "\nNodeName=")
+	// get rid of leading "NodeNames="
+	nodes[0] = nodes[0][len("NodeNames"): len(nodes[0])]
+	//iter over all nodes found
+	for _, n := range nodes {
+		//check is cloud node
+		if m, err := regexp.Match("ActiveFeatures=cloud" , []byte(n)); !m {
+			continue
+		}else if err != nil {
+			log.Printf("ERROR:slurm: Could not check if node is cloud %s, %s\n", n, err)
+		}
+		//check if off matches powering_down too
+		if m, err := regexp.Match("State=IDLE\\+CLOUD\\+POWER", []byte(n)); m {
+			off = append(off, strings.SplitN(n, " ", 2)[0])
+			continue
+		} else if err != nil {
+			log.Printf("Error:slurm: Error parsing node %s, %s\n", n, err)
+		}
+
+		//check if on
+		str := "State=(IDLE|ALLOCATED)[#]?\\+CLOUD"
+		if m, err := regexp.Match(str, []byte(n)); m {
+			on = append(on, strings.SplitN(n, " ", 2)[0])
+			continue
+		} else if err != nil {
+			log.Printf("Error:slurm: Error parsing node %s, %s\n", n, err)
+		}
+
+		broken = append(broken, strings.SplitN(n, " ", 2)[0])
+	}
+	return on, off, broken
+}
+
+//fixBroken resets the state of any slurm cloud nodes that slurm thinks are broken in some way
+func fixBroken(nodes []string) {
+	for _, n := range nodes {
+		log.Printf("INFO:slurm: attempting to fix node '%s'\n", n)
+		out, err := exec.Command(utils.Config("slurm.dir").Self()+"/bin/scontrol", "update", "State=power_down", "NodeName="+n).Output()
+		if err != nil {
+			log.Printf("ERROR:slurm: error powering down node: %s \n %s\n", out, err)
+		}
+		out, err = exec.Command(utils.Config("slurm.dir").Self()+"/bin/scontrol", "update", "State=resume", "NodeName="+n).Output()
+		if err != nil {
+			log.Printf("ERROR:slurm: error resuming node: %s \n %s\n", out, err)
+		}
+	}
 }

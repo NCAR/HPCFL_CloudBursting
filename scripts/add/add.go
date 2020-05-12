@@ -101,12 +101,39 @@ func main() {
 	//create new instances
 	tfAdd(newInsts)
 
+	//check in terraform is in sync with scheduler
+	//make a set of all on instances in slurm
+	found := make(map[string]struct{})
+	for _, inst := range slurm.On() {
+		found[inst] = struct{}{}
+	}
+	//check against on instances in terraform
+	for _, inst := range terraform.On() {
+		if _, ok := found[inst]; ok {
+			//this is good, remove from set as inst is in a good state
+			delete(found, inst)
+		}else{
+			//out of sync for this instance
+			//scheduler doesn't know about it so just kill it
+			terraform.Del(inst)	 
+		}
+	}
+	// see what instances are in slurm and not terraform
+	// anything left in set was not in terraform
+	// scheduler wants these instances, but they are in a weird state
+	// so probably safest to just kill them 
+	for inst, _ := range found {
+		terraform.Del(inst)
+	}
+
 	//update infrastructure to reflect config updates
 	log.Printf("INFO: Pushing infrastructure update\n")
 	terraform.Update()
 
 	//do basic setup of new instances in parallel
 	setup(newInsts)
+
+	//TODO explicitly tell slurm nodes are up
 
 	log.Printf("INFO: Done adding instances\n")
 }

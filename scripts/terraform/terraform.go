@@ -150,13 +150,16 @@ func Update() {
 
 //TODO test
 func instanceNames() []string {
-	matches, err := filepath.Glob(utils.Config("terraform.tf_files").Self() + "[!infra].tf")
+	matches, err := filepath.Glob(utils.Config("terraform.tf_files").Self() + "*.tf")
 	if err != nil {
 		log.Fatal(err)
 	}
 	names := []string{}
 	for _, match := range matches {
 		_, file := filepath.Split(match)
+		if strings.Compare("infra.tf", file) == 0 {
+			continue
+		}
 		names = append(names, file[:len(file)-3])
 	}
 	return names
@@ -210,4 +213,9 @@ func ip(name string) string {
 		return ""
 	}
 	return addr[0]
+}
+
+//On returns a list of nodes terraform thinks are on
+func On() []string {
+	return instanceNames()
 }
