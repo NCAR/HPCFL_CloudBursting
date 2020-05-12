@@ -31,11 +31,14 @@
 
 sudo hostnamectl set-hostname $1
 
+ROUTER=$2
+SALT=$3
+
 sudo ip r del default &
 sleep 2
-sudo ip r add default via 192.168.2.10
+sudo ip r add default via $ROUTER
 
-printf "\n192.168.0.120 salt\n" | sudo sh -c "cat >> /etc/hosts"
+printf "\n$SALT salt\n" | sudo sh -c "cat >> /etc/hosts"
 sudo yum install https://repo.saltstack.com/yum/redhat/salt-repo-latest.el7.noarch.rpm -y
 #sudo yum install https://repo.saltstack.com/py3/amazon/salt-py3-amzn2-repo-latest.amzn2.noarch.rpm -y
 sudo yum install epel-release -y

@@ -30,16 +30,20 @@
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSHKEY='/home/slurm/.ssh/hpcfl2'
+NAME=$1
+DIR=$2
+ROUTER=$3
+SALT=$4
 
 # make sure old key isn't in know hosts
-sed -i '/'$1'/d' ~/.ssh/known_hosts
+sed -i '/'$NAME'/d' ~/.ssh/known_hosts
 
 sleep 10
 tries=0
 ret=255
 while [ $ret -ne 0 -a $tries -lt 20 ]; do
   sleep 20
-  scp -oStrictHostKeyChecking=no -i$SSHKEY "$2saltInstall.sh" centos@$1:~/
+  scp -oStrictHostKeyChecking=no -i$SSHKEY "$DIR/saltInstall.sh" centos@$NAME:~/
   ret=$?
   tries=$((tries+=1))
   #echo $tries
@@ -49,10 +53,10 @@ if [ $ret -ne 0 ]; then
   exit 7
 fi
 
-scp -i$SSHKEY "$2salt-minion.service" centos@$1:~/
-scp -i$SSHKEY "$2ifcfg-eth0" centos@$1:~/
-scp -i$SSHKEY "$2minion" centos@$1:~/
-scp -i$SSHKEY "$2keys/$1.pem" centos@$1:~/minion.pem
-scp -i$SSHKEY "$2keys/$1.pub" centos@$1:~/minion.pub
-ssh -i$SSHKEY centos@$1 "chmod +x saltInstall.sh"
-ssh -i$SSHKEY centos@$1 "./saltInstall.sh $1"
+scp -i$SSHKEY "$DIR/salt-minion.service" centos@$NAME:~/
+scp -i$SSHKEY "$DIR/ifcfg-eth0" centos@$NAME:~/
+scp -i$SSHKEY "$DIR/minion" centos@$NAME:~/
+scp -i$SSHKEY "$DIR/keys/$NAME.pem" centos@$NAME:~/minion.pem
+scp -i$SSHKEY "$DIR/keys/$NAME.pub" centos@$NAME:~/minion.pub
+ssh -i$SSHKEY centos@$NAME "chmod +x saltInstall.sh"
+ssh -i$SSHKEY centos@$NAME "./saltInstall.sh $NAME, $ROUTER, $SALT"

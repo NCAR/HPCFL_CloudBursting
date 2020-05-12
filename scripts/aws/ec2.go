@@ -2,10 +2,10 @@
 Copyright (c) 2020, University Corporation for Atmospheric Research
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, 
+1. Redistributions of source code must retain the above copyright notice,
 this list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -16,14 +16,14 @@ and/or other materials provided with the distribution.
 may be used to endorse or promote products derived from this software without
 specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -58,14 +58,15 @@ func New(name, privateIP, publicIP, part string) EC2Instance {
 func (i EC2Instance) Setup() error {
 	log.Printf("DEBUG:aws: Setting up a compute instance\n")
 	// must be able to deal with the exit status of script is 255 b/c of reboot command
-	setup := utils.Config("partitions").Lookup(i.partition + ".setup").Self()
-	if setup == "" {
+	conf := utils.Config("partitions").Lookup(i.partition).Contains()
+	setup, ok := conf["setup"]
+	if !ok {
 		log.Printf("DEBUG:aws: No setup required\n")
 		return nil
 	}
-	dirSplit := strings.SplitAfter(setup, "/")
+	dirSplit := strings.SplitAfter(setup.Self(), "/")
 	dir := strings.Join(dirSplit[:len(dirSplit)-1], "")
-	err := exec.Command(setup, i.Name(), dir).Run()
+	err := exec.Command(setup.Self(), i.Name(), dir, conf["router"].Self(), conf["salt"].Self()).Run()
 	if err != nil && !strings.Contains(err.Error(), "255") {
 		return fmt.Errorf("WARNING:aws: could not setup instance %s due to %v", i.Name(), err)
 	}
@@ -110,12 +111,12 @@ func (i EC2Instance) Name() string {
 
 //AMI returns the instance ami
 func (i EC2Instance) AMI() string {
-	return utils.Config("partitions."+i.partition+".ami").Self()
+	return utils.Config("partitions." + i.partition + ".ami").Self()
 }
 
 //Size returns the instance size
 func (i EC2Instance) Size() string {
-	return utils.Config("partitions."+i.partition+".size").Self()
+	return utils.Config("partitions." + i.partition + ".size").Self()
 }
 
 //PublicIP returns the publicIP of the instance

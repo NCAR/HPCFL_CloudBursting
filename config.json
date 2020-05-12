@@ -13,6 +13,8 @@
       "ami": "ami-098f55b4287a885ba",
       "size": "t2.micro",
       "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+	  "salt": "192.168.0.120",
+	  "router": "192.168.2.10",
       "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
       "teardown": "/home/slurm/terraform/scripts/aws/setup/teardown.sh",
       "regex": "^aws[0-9]$"
@@ -22,6 +24,8 @@
       "ami": "ami-098f55b4287a885ba",
       "size": "t2.micro",
       "template": "/home/slurm/terraform/scripts/aws/ec2Instance.tmpl",
+	  "salt": "192.168.0.120",
+	  "router": "192.168.2.10",
       "setup": "/home/slurm/terraform/scripts/aws/setup/nodeSetup.sh",
       "teardown": "/home/slurm/terraform/scripts/aws/setup/teardown.sh",
       "regex": "^aws[0-9][0-9]$"
