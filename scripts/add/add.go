@@ -46,7 +46,10 @@ var config = "/opt/slurm/latest/etc/cloud_config.json"
 func tfAdd(names []string) {
 	for _, inst := range names {
 		log.Printf("INFO: Creating Instance %s\n", inst)
-		terraform.Add(inst)
+		err := terraform.Add(inst)
+		if err != nil {
+			log.Printf("ERROR: %s\n", err)
+		}
 	}
 }
 
@@ -57,14 +60,13 @@ func setup(names []string) {
 		wg.Add(1)
 		go func(name string, wg *sync.WaitGroup) {
 			defer wg.Done()
-			inst := terraform.Info(name)
-			log.Printf("%+v\n", inst)
-			if inst == nil {
-				log.Printf("CRITICAL: Could not find instance %s\n", name)
+			inst, err := terraform.Info(name)
+			if err != nil {
+				log.Printf("CRITICAL: terraform could not find instance %s\n", err)
 				return
 			}
 			log.Printf("INFO: Provisioning new instance %s\n", inst)
-			err := inst.Setup()
+			err = inst.Setup()
 			if err != nil {
 				log.Printf("ERROR:add:%v\n", err)
 				return

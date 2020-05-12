@@ -81,23 +81,21 @@ func partition(name string) utils.Elem {
 			return part
 		}
 	}
-	log.Printf("ERROR:terraform: Could not find partition for node %s\n", name)
 	return nil
 }
 
 //Info returns all of the information terraform knows about the given instance name
-func Info(name string) Instance {
+func Info(name string) (Instance, error) {
 	//setup and run command
 	cmd := exec.Command(utils.Config("terraform.dir").Self()+"terraform", "output", "-state="+utils.Config("terraform.dir").Self()+"terraform.tfstate", "-json", "-no-color", name)
 	configCmd(cmd)
 	out, err := cmd.Output()
 	if err != nil {
-		log.Printf("ERROR:terraform: Could not get info for %s %s\n", name, err)
+		return nil, fmt.Errorf("could not get info for %s %s", name, err)
 	}
 	part := partition(name)
 	if part == nil {
-		log.Printf("Error: Don't know how to get info for instance %s\n", name)
-		return nil
+		return nil, fmt.Errorf("Can't find partition containing %s", name)
 	}
 	switch part.Lookup("type").Self() {
 	case "aws":
@@ -107,15 +105,14 @@ func Info(name string) Instance {
 			PrivateIP string `json:"privateIP"`
 			PublicIP  string `json:"publicIP"`
 		}
-		err = json.Unmarshal([]byte(out), &instance) //[]byte conversion is redundant
-		if err != nil {
-			log.Printf("ERROR:terraform: Could not decode info for %s %s\n", name, err)
+		//[]byte conversion is redundant
+		if json.Unmarshal([]byte(out), &instance) != nil {
+			return nil, fmt.Errorf("could not decode info for %s %s", name, err)
 		}
-		return aws.New(instance.Name, instance.PrivateIP, instance.PublicIP, part.Self())
+		return aws.New(instance.Name, instance.PrivateIP, instance.PublicIP, part.Self()), nil
 
 	default:
-		log.Printf("ERROR:terraform: Unrecognized node type %s for node %s\n", part.Lookup("type").Self(), name)
-		return nil
+		return nil, fmt.Errorf("unrecognized node type %s for node %s", part.Lookup("type").Self(), name)
 
 	}
 }
@@ -125,7 +122,10 @@ func Info(name string) Instance {
 func Del(name string) {
 	//TODO if Info takes a while maybe check this is neccessary before doing
 	// e.g. check n has a teardown script
-	n := Info(name)
+	n, err := Info(name)
+	if err != nil {
+		log.Printf("ERROR:terraform: Could not find node %s\n", name)
+	}
 	if n != nil {
 		n.Teardown()
 	}
@@ -147,7 +147,7 @@ func Update() {
 		configCmd(cmd)
 		tries++
 		if tries > 25 {
-			log.Printf("ERROR:terraform: Could not update cloud resources\n")
+			log.Printf("CRITICAL:terraform: Could not update cloud resources\n")
 		}
 	}
 }
@@ -184,38 +184,40 @@ func Add(name string) error {
 	part := partition(name)
 	switch part.Lookup("type").Self() {
 	case "aws":
-		ip := ip(name)
-		if ip == "" {
-			log.Printf("Error: Unable to add node %s\n", name)
-			return nil
+		ip, err := ip(name)
+		if err != nil {
+			return fmt.Errorf("unable to add node %s", err)
 		}
-		return confFunc(part.Lookup("template").Self(), name)(aws.New(name, ip, "", part.Self()))
+		cf, err := confFunc(part.Lookup("template").Self(), name)
+		if err != nil {
+			return fmt.Errorf("unable to add node %s: %s", name, err)
+		}
+		return cf(aws.New(name, ip, "", part.Self()))
 	default:
-		return fmt.Errorf("error: don't know how to add instance %s", name)
+		return fmt.Errorf("don't know how to add instance %s", name)
 	}
 }
 
 //add populates the given template with the given Instance
-func confFunc(tmpl, name string) func(interface{}) error {
+func confFunc(tmpl, name string) (func(interface{}) error, error) {
 	n := strings.Split(tmpl, "/")
 	t, err := template.New(n[len(n)-1]).ParseFiles(tmpl)
 	if err != nil {
-		log.Printf("ERROR:terraform: Could not open template file %s\n", tmpl)
+		return nil, fmt.Errorf("could not open template file %s", tmpl)
 	}
 	fh, err := os.Create(utils.Config("terraform.tf_files").Self() + name + ".tf")
 	if err != nil {
-		log.Printf("ERROR:terraform: Error creating config file for instance %s %s\n", name, err)
+		return nil, fmt.Errorf("error creating config file for instance %s %s", name, err)
 	}
-	return (func(inst interface{}) error { err := t.Execute(fh, inst); fh.Close(); return err })
+	return (func(inst interface{}) error { err := t.Execute(fh, inst); fh.Close(); return err }), nil
 }
 
-func ip(name string) string {
+func ip(name string) (string, error) {
 	addr, err := net.LookupHost(name)
 	if err != nil {
-		log.Printf("Error: Could not find ip for host %s\n", name)
-		return ""
+		return "", fmt.Errorf("could not find ip for host %s, %s", name, err)
 	}
-	return addr[0]
+	return addr[0], nil
 }
 
 //On returns a list of nodes terraform thinks are on
