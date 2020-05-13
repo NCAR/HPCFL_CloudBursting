@@ -38,6 +38,7 @@ sudo ip r del default &
 sleep 2
 sudo ip r add default via $ROUTER
 
+sed -i "s/ROUTER/$ROUTER/g" /home/centos/ifcfg-eth0
 printf "\n$SALT salt\n" | sudo sh -c "cat >> /etc/hosts"
 sudo yum install https://repo.saltstack.com/yum/redhat/salt-repo-latest.el7.noarch.rpm -y
 #sudo yum install https://repo.saltstack.com/py3/amazon/salt-py3-amzn2-repo-latest.amzn2.noarch.rpm -y

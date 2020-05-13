@@ -34,7 +34,6 @@ NAME=$1
 DIR=$2
 ROUTER=$3
 SALT=$4
-
 # make sure old key isn't in know hosts
 sed -i '/'$NAME'/d' ~/.ssh/known_hosts
 
@@ -59,4 +58,4 @@ scp -i$SSHKEY "$DIR/minion" centos@$NAME:~/
 scp -i$SSHKEY "$DIR/keys/$NAME.pem" centos@$NAME:~/minion.pem
 scp -i$SSHKEY "$DIR/keys/$NAME.pub" centos@$NAME:~/minion.pub
 ssh -i$SSHKEY centos@$NAME "chmod +x saltInstall.sh"
-ssh -i$SSHKEY centos@$NAME "./saltInstall.sh $NAME, $ROUTER, $SALT"
+ssh -i$SSHKEY centos@$NAME "./saltInstall.sh $NAME $ROUTER $SALT"
